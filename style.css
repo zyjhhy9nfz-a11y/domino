@@ -1,0 +1,1 @@
+/* Theme variables */ :root { --bg: #f4f4f6; --text: #1c1c1e; } @media (prefers-color-scheme: dark) { :root { --bg: #121214; --text: #f4f4f6; } } body { background: var(--bg); color: var(--text); font-family: system-ui; text-align: center; }

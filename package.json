@@ -1,1 +1,14 @@
-{"name":"dominoes-proto","type":"module","scripts":{"dev":"vite","build":"vite build"},"devDependencies":{"vite":"^8.0.14"}}
+{
+  "name": "dominoes-proto",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "node server.js",
+    "beta": "npm run build && npm run serve",
+    "preview": "vite preview --host"
+  },
+  "devDependencies": {
+    "vite": "^8.0.14"
+  }
+}

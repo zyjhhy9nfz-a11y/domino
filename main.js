@@ -29,6 +29,12 @@ let selectedBoneyardIndex = null;
 let liveCalculationText = "No tiles played yet.";
 let paperTapeHistory = []; 
 
+// --- Mobile Detection ---
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    || window.matchMedia("(max-width: 768px)").matches;
+} 
+
 // --- 3. Shuffle Algorithm ---
 function shuffleBoneyard() {
   boneyard = [...FULL_DECK];
@@ -472,131 +478,86 @@ function executeComputerTurn() {
 // --- 14. Integrated Layout & Interface Pipeline ---
 function renderGame() {
   const appDiv = document.getElementById("app");
-  appDiv.innerHTML = "<h1>Dominoes Prototype (Louisiana Rules Mode)</h1>";
+  appDiv.innerHTML = '<h1 class="game-title">Dominoes Prototype (Louisiana Rules Mode)</h1>';
 
   const mainframe = document.createElement("div");
-  mainframe.style.display = "flex";
-  mainframe.style.gap = "25px";
-  mainframe.style.flexWrap = "wrap";
-  mainframe.style.justifyContent = "center";
+  mainframe.className = "mainframe";
 
   const gameTableSide = document.createElement("div");
-  gameTableSide.style.flex = "2";
-  gameTableSide.style.minWidth = "320px";
-  gameTableSide.style.maxWidth = "500px";
+  gameTableSide.className = "game-table";
 
   const diagnosticSide = document.createElement("div");
-  diagnosticSide.style.flex = "1";
-  diagnosticSide.style.minWidth = "260px";
-  diagnosticSide.style.background = "#1c1c1e";
-  diagnosticSide.style.color = "#3aee3a";
-  diagnosticSide.style.fontFamily = "monospace";
-  diagnosticSide.style.padding = "15px";
-  diagnosticSide.style.borderRadius = "8px";
-  diagnosticSide.style.boxShadow = "inset 0 0 10px #000";
+  diagnosticSide.className = "diagnostic-panel";
 
-  // Dashboard Summary Layout
   const scoreDiv = document.createElement("div");
-  scoreDiv.style.background = "#f4f4f6";
-  scoreDiv.style.border = "1px solid #ccc";
-  scoreDiv.style.padding = "12px";
-  scoreDiv.style.borderRadius = "6px";
-  scoreDiv.style.fontWeight = "bold";
-  scoreDiv.style.fontSize = "1.05rem";
-  scoreDiv.style.textAlign = "center";
+  scoreDiv.className = "score-panel";
   scoreDiv.innerHTML = `
-    <div style="display:flex; justify-content:space-around; margin-bottom:8px;">
-      <div style="color:#0055cc">Player Total: ${playerScore}</div>
-      <div style="color:#cc2200">Computer Total: ${computerScore}</div>
+    <div class="score-row">
+      <div class="score-player">Player Total: ${playerScore}</div>
+      <div class="score-computer">Computer Total: ${computerScore}</div>
     </div>
-    <div style="font-size:0.95rem; color:#111; border-top:1px solid #bbb; padding-top:6px; font-weight:800;">
-      🤖 Opponent Status: ${computerHand.length} Tiles Held
+    <div class="score-status">
+      🤖 Opponent: ${computerHand.length} tiles · Boneyard: ${boneyard.length}
     </div>
   `;
   gameTableSide.appendChild(scoreDiv);
 
-  // Hidden Opponent Hand Rack
+  const turnBanner = document.createElement("div");
+  turnBanner.className = "turn-banner";
+  if (isGameOver) {
+    turnBanner.classList.add("turn-banner--over");
+    turnBanner.textContent = gameLog;
+  } else if (isPlayerTurn) {
+    turnBanner.classList.add("turn-banner--player");
+    turnBanner.textContent = "Your turn — select a tile, then tap a branch";
+  } else {
+    turnBanner.classList.add("turn-banner--computer");
+    turnBanner.textContent = "Computer is thinking…";
+  }
+  gameTableSide.appendChild(turnBanner);
+
   const opponentHandDiv = document.createElement("div");
-  opponentHandDiv.style.display = "flex";
-  opponentHandDiv.style.gap = "6px";
-  opponentHandDiv.style.justifyContent = "center";
-  opponentHandDiv.style.margin = "12px 0";
+  opponentHandDiv.className = "opponent-rack";
 
   computerHand.forEach(tile => {
     const card = document.createElement("div");
-    card.style.border = "2px solid #333333";
-    card.style.borderRadius = "5px";
-    card.style.padding = "8px 12px";
-    card.style.fontSize = "0.9rem";
-    card.style.fontWeight = "bold";
-    card.style.textAlign = "center";
-    card.style.minWidth = "24px";
-    card.style.height = "18px";
-    card.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
-
-    if (isGameOver) {
-      card.style.background = "#ffffff";
-      card.style.color = "#d9381e";
-      card.textContent = `${tile[0]}·${tile[1]}`;
-    } else {
-      card.style.background = "#ffffff";
-      card.style.color = "transparent";
-      card.textContent = "··"; 
-    }
+    card.className = isGameOver ? "opponent-tile opponent-tile--revealed" : "opponent-tile opponent-tile--hidden";
+    card.textContent = isGameOver ? `${tile[0]}·${tile[1]}` : "··";
     opponentHandDiv.appendChild(card);
   });
   gameTableSide.appendChild(opponentHandDiv);
 
   const liveCalcBox = document.createElement("div");
-  liveCalcBox.style.margin = "10px 0";
-  liveCalcBox.style.padding = "8px";
-  liveCalcBox.style.background = "#eef6ff";
-  liveCalcBox.style.borderLeft = "4px solid #007aff";
-  liveCalcBox.style.fontWeight = "600";
-  liveCalcBox.style.fontSize = "0.95rem";
-  liveCalcBox.style.color = "#000000";
+  liveCalcBox.className = "live-calc";
   liveCalcBox.innerHTML = `<span style="color:#555">Live Board Pips:</span> ${liveCalculationText}`;
   gameTableSide.appendChild(liveCalcBox);
 
   const logBox = document.createElement("p");
-  logBox.style.fontStyle = "italic";
-  logBox.style.margin = "10px 0";
-  logBox.style.minHeight = "35px";
-  logBox.style.fontWeight = "bold";
-  logBox.textContent = gameLog;
+  logBox.className = "game-log";
+  if (!isGameOver) logBox.textContent = gameLog;
   gameTableSide.appendChild(logBox);
 
-  // Board Matrix Configuration Node
+  const boardWrapper = document.createElement("div");
+  boardWrapper.className = "board-wrapper";
+
+  const boardScaler = document.createElement("div");
+  boardScaler.className = "board-scaler";
+
   const boardDiv = document.createElement("div");
-  boardDiv.style.display = "grid";
-  boardDiv.style.gridTemplateColumns = "55px 55px 55px 75px 55px 55px 55px";
-  boardDiv.style.gridTemplateRows = "45px 45px 45px 65px 45px 45px 45px";
-  boardDiv.style.gap = "5px";
-  boardDiv.style.justifyContent = "center";
-  boardDiv.style.alignItems = "center";
-  boardDiv.style.margin = "15px auto";
+  boardDiv.className = "board";
 
   const createTileBadge = (move, isActiveOuterTip, branchName) => {
     const badge = document.createElement("div");
-    badge.style.border = "2px solid #333333";
-    badge.style.borderRadius = "5px";
-    badge.style.padding = "4px 2px";
-    
+    badge.className = "tile-badge";
     if (move.isDouble) {
-      badge.style.background = isActiveOuterTip ? "#fff4de" : "#eadeca";
-      badge.style.border = "2px solid #b07d00";
+      badge.classList.add("tile-badge--double");
+      if (isActiveOuterTip) badge.classList.add("tile-badge--double-active");
+    } else if (isActiveOuterTip) {
+      badge.classList.add("tile-badge--active");
     } else {
-      badge.style.background = isActiveOuterTip ? "#ffffff" : "#e0e0e0";
+      badge.classList.add("tile-badge--inactive");
     }
-    
-    badge.style.color = "#000000";
-    badge.style.fontWeight = "bold";
-    badge.style.fontSize = "0.85rem";
-    badge.style.textAlign = "center";
-    if (!isActiveOuterTip) badge.style.opacity = "0.5";
-    
-    // VISUAL RENDERING SHIFT FIXED HERE:
-    // The data is universally [inner, outer]. For Left and Up tracks, flip text to point outwards.
+
     if (branchName === "left" || branchName === "up") {
       badge.textContent = `${move.tile[1]}·${move.tile[0]}`;
     } else {
@@ -607,11 +568,7 @@ function renderGame() {
 
   const createBreakBadge = () => {
     const breakBadge = document.createElement("div");
-    breakBadge.style.color = "#888888";
-    breakBadge.style.fontWeight = "bold";
-    breakBadge.style.fontSize = "1.2rem";
-    breakBadge.style.textPadding = "center";
-    breakBadge.style.letterSpacing = "2px";
+    breakBadge.className = "branch-break";
     breakBadge.textContent = "···";
     return breakBadge;
   };
@@ -650,48 +607,32 @@ function renderGame() {
     
     if (targetCoord) {
       const slotBtn = document.createElement("button");
+      slotBtn.className = "branch-slot";
       slotBtn.style.gridColumn = targetCoord.col;
       slotBtn.style.gridRow = targetCoord.row;
-      slotBtn.style.height = "85%";
-      slotBtn.style.border = "2px dashed #333333";
-      slotBtn.style.borderRadius = "5px";
-      slotBtn.style.background = "transparent";
-      slotBtn.style.color = "#333333";
-      slotBtn.style.cursor = (!isGameOver && isPlayerTurn) ? "pointer" : "not-allowed";
-      slotBtn.style.fontSize = "0.75rem";
       slotBtn.innerHTML = `${targetCoord.arrow}<br>(${tipValue})`;
 
       if (selectedTileIndex !== null && isPlayerTurn && !isGameOver) {
         const selectedTile = playerHand[selectedTileIndex];
         if (isValidMove(selectedTile, name)) {
-          slotBtn.style.background = "rgba(40, 167, 69, 0.2)";
-          slotBtn.style.border = "2px solid #28a745";
-          slotBtn.style.color = "#155724";
+          slotBtn.classList.add("branch-slot--valid");
           slotBtn.onclick = () => playTileToBranch(name);
         } else {
           slotBtn.disabled = true;
-          slotBtn.style.opacity = "0.1";
+          slotBtn.classList.add("branch-slot--hidden");
         }
       } else {
         slotBtn.disabled = true;
-        slotBtn.style.opacity = "0.3"; 
+        slotBtn.classList.add("branch-slot--dim");
       }
       boardDiv.appendChild(slotBtn);
     }
   };
 
-  // Center Spinner Badge Assembly
   const spinnerElement = document.createElement("div");
+  spinnerElement.className = "spinner";
   spinnerElement.style.gridColumn = "4";
   spinnerElement.style.gridRow = "4";
-  spinnerElement.style.border = "2px solid #333333";
-  spinnerElement.style.borderRadius = "6px";
-  spinnerElement.style.padding = "6px 2px";
-  spinnerElement.style.background = "#ffffff";
-  spinnerElement.style.color = "#000000";
-  spinnerElement.style.fontWeight = "bold";
-  spinnerElement.style.textAlign = "center";
-  spinnerElement.style.fontSize = "0.9rem";
   spinnerElement.innerHTML = `⚙️<br>[${board.spinner[0]}·${board.spinner[1]}]`;
   boardDiv.appendChild(spinnerElement);
 
@@ -701,65 +642,42 @@ function renderGame() {
   renderBranchRoute("right", [{ col: "5", row: "4", arrow: "►" }, { col: "6", row: "4", arrow: "►" }, { col: "7", row: "4", arrow: "►" }]);
   renderBranchRoute("down", [{ col: "4", row: "5", arrow: "▼" }, { col: "4", row: "6", arrow: "▼" }, { col: "4", row: "7", arrow: "▼" }]);
   
-  gameTableSide.appendChild(boardDiv);
+  boardScaler.appendChild(boardDiv);
+  boardWrapper.appendChild(boardScaler);
+  gameTableSide.appendChild(boardWrapper);
 
-  // Drawing Deck Pipeline Elements
   const playerNeedsToDraw = isPlayerTurn && !hasAnyValidMoves(playerHand) && boneyard.length > 0 && !isGameOver;
   if (playerNeedsToDraw) {
     const drawSection = document.createElement("div");
-    drawSection.style.background = "#fff0f0";
-    drawSection.style.border = "1px solid #ffcccc";
-    drawSection.style.padding = "10px";
-    drawSection.style.borderRadius = "6px";
-    drawSection.style.marginTop = "15px";
+    drawSection.className = "draw-section";
 
     const boneLabel = document.createElement("h3");
-    boneLabel.textContent = `Boneyard Pool (${boneyard.length} tiles available)`;
-    boneLabel.style.color = "#d9381e";
-    boneLabel.style.margin = "0 0 10px 0";
+    boneLabel.textContent = `Boneyard (${boneyard.length} tiles)`;
     drawSection.appendChild(boneLabel);
 
     const drawActionsWrapper = document.createElement("div");
-    drawActionsWrapper.style.display = "flex";
-    drawActionsWrapper.style.gap = "10px";
-    drawActionsWrapper.style.alignItems = "center";
-    drawActionsWrapper.style.flexWrap = "wrap";
+    drawActionsWrapper.className = "draw-actions";
 
     const autoBtn = document.createElement("button");
-    autoBtn.textContent = "⚡ Instant Auto-Draw";
-    autoBtn.style.padding = "8px 12px";
-    autoBtn.style.border = "none";
-    autoBtn.style.borderRadius = "5px";
-    autoBtn.style.background = "#007aff";
-    autoBtn.style.color = "#ffffff";
-    autoBtn.style.fontWeight = "bold";
-    autoBtn.style.cursor = "pointer";
+    autoBtn.className = "btn btn-primary";
+    autoBtn.textContent = "⚡ Auto-Draw";
     autoBtn.onclick = handlePlayerAutoDraw;
     drawActionsWrapper.appendChild(autoBtn);
 
     const manualLabel = document.createElement("span");
-    manualLabel.textContent = "Or pick manually below:";
+    manualLabel.textContent = "Or pick manually:";
     manualLabel.style.fontSize = "0.85rem";
     manualLabel.style.fontWeight = "bold";
     drawActionsWrapper.appendChild(manualLabel);
     drawSection.appendChild(drawActionsWrapper);
 
     const manualPoolContainer = document.createElement("div");
-    manualPoolContainer.style.display = "flex";
-    manualPoolContainer.style.gap = "6px";
-    manualPoolContainer.style.flexWrap = "wrap";
-    manualPoolContainer.style.marginTop = "10px";
+    manualPoolContainer.className = "boneyard-pool";
 
     boneyard.forEach((tile, bIndex) => {
       const boneBtn = document.createElement("button");
       const isTargeted = (bIndex === selectedBoneyardIndex);
-      boneBtn.style.background = isTargeted ? "#d9381e" : "#555555";
-      boneBtn.style.color = "#ffffff";
-      boneBtn.style.border = "none";
-      boneBtn.style.borderRadius = "4px";
-      boneBtn.style.padding = "6px 10px";
-      boneBtn.style.fontSize = "0.8rem";
-      boneBtn.style.cursor = "pointer";
+      boneBtn.className = isTargeted ? "btn-boneyard btn-boneyard--selected" : "btn-boneyard";
       boneBtn.textContent = isTargeted ? "Confirm?" : `Tile ${bIndex + 1}`;
       boneBtn.onclick = () => handlePlayerManualDraw(bIndex);
       manualPoolContainer.appendChild(boneBtn);
@@ -768,35 +686,17 @@ function renderGame() {
     gameTableSide.appendChild(drawSection);
   }
 
-  // Hand Interface
   const handContainer = document.createElement("div");
-  handContainer.style.display = "flex";
-  handContainer.style.gap = "8px";
-  handContainer.style.justifyContent = "center";
-  handContainer.style.flexWrap = "wrap";
-  handContainer.style.marginTop = "20px";
+  handContainer.className = "hand-container";
 
   playerHand.forEach((tile, index) => {
     const tileBtn = document.createElement("button");
     const isSelected = (index === selectedTileIndex);
-    
-    tileBtn.style.color = "#000000"; 
-    tileBtn.style.background = "#ffffff"; 
-    tileBtn.style.border = isSelected ? "3px solid #007aff" : "2px solid #333333";
-    tileBtn.style.borderRadius = "6px";
-    tileBtn.style.padding = "10px 14px";
-    tileBtn.style.fontWeight = "bold";
-    tileBtn.style.fontSize = "1.1rem";
-    tileBtn.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-    tileBtn.style.cursor = (isPlayerTurn && !isGameOver) ? "pointer" : "not-allowed";
-    
-    if (!isPlayerTurn || isGameOver) {
-      tileBtn.style.opacity = "0.7";
-      tileBtn.style.background = "#f0f0f0";
-    }
-    
+    tileBtn.className = "hand-tile";
+    if (isSelected) tileBtn.classList.add("hand-tile--selected");
+    if (!isPlayerTurn || isGameOver) tileBtn.classList.add("hand-tile--disabled");
     tileBtn.textContent = `${tile[0]}·${tile[1]}`;
-    
+
     if (isPlayerTurn && !isGameOver) {
       tileBtn.onclick = () => {
         selectedTileIndex = isSelected ? null : index;
@@ -809,35 +709,17 @@ function renderGame() {
 
   if (isGameOver) {
     const restartBtn = document.createElement("button");
+    restartBtn.className = "btn btn-success";
     restartBtn.textContent = "🔄 Play Next Round";
-    restartBtn.style.display = "block";
-    restartBtn.style.margin = "20px auto";
-    restartBtn.style.padding = "12px 24px";
-    restartBtn.style.background = "#28a745";
-    restartBtn.style.color = "#fff";
-    restartBtn.style.border = "none";
-    restartBtn.style.borderRadius = "6px";
-    restartBtn.style.fontWeight = "bold";
-    restartBtn.style.fontSize = "1.1rem";
-    restartBtn.style.cursor = "pointer";
     restartBtn.onclick = initGame;
     gameTableSide.appendChild(restartBtn);
   }
 
-  diagnosticSide.innerHTML = `<h3 style="margin-top:0; border-bottom: 1px solid #3aee3a; padding-bottom:5px; color:#fff;">📋 Scoring Audit Tape</h3>`;
-  
-  // ADD DEBUG INFO BUTTON
+  diagnosticSide.innerHTML = `<h3 class="diagnostic-title">📋 Scoring Audit Tape</h3>`;
+
   const debugBtn = document.createElement("button");
+  debugBtn.className = "btn-debug";
   debugBtn.textContent = "🔍 Debug State";
-  debugBtn.style.background = "#444";
-  debugBtn.style.color = "#3aee3a";
-  debugBtn.style.border = "1px solid #3aee3a";
-  debugBtn.style.borderRadius = "4px";
-  debugBtn.style.padding = "6px 10px";
-  debugBtn.style.fontSize = "0.75rem";
-  debugBtn.style.marginBottom = "10px";
-  debugBtn.style.cursor = "pointer";
-  debugBtn.style.fontWeight = "bold";
   debugBtn.onclick = () => {
     console.clear();
     dumpBoardState("DEBUG: Current Board State");
@@ -850,17 +732,8 @@ function renderGame() {
   diagnosticSide.appendChild(debugBtn);
   
   const repairBtn = document.createElement("button");
+  repairBtn.className = "btn-repair";
   repairBtn.textContent = "🔧 Repair State";
-  repairBtn.style.background = "#662200";
-  repairBtn.style.color = "#ffaa00";
-  repairBtn.style.border = "1px solid #ffaa00";
-  repairBtn.style.borderRadius = "4px";
-  repairBtn.style.padding = "6px 10px";
-  repairBtn.style.fontSize = "0.75rem";
-  repairBtn.style.marginBottom = "10px";
-  repairBtn.style.marginLeft = "6px";
-  repairBtn.style.cursor = "pointer";
-  repairBtn.style.fontWeight = "bold";
   repairBtn.onclick = () => {
     repairBoardState("UI: State Repair Triggered");
     renderGame();
@@ -868,32 +741,23 @@ function renderGame() {
   diagnosticSide.appendChild(repairBtn);
   
   const tapeContainer = document.createElement("div");
-  tapeContainer.style.maxHeight = "450px";
-  tapeContainer.style.overflowY = "auto";
-  tapeContainer.style.fontSize = "0.85rem";
-  tapeContainer.style.lineHeight = "1.4";
+  tapeContainer.className = "tape-container";
 
   if (paperTapeHistory.length === 0) {
     tapeContainer.innerHTML = `<span style="color:#777">Tape is clean. Make a move to print calculations.</span>`;
   } else {
     paperTapeHistory.forEach(entry => {
       const line = document.createElement("div");
-      line.style.marginBottom = "8px";
-      line.style.borderBottom = "1px dashed #333";
-      line.style.paddingBottom = "4px";
-      
+      line.className = "tape-line";
       if (entry.includes("Scored") || entry.includes("Swept")) {
-        line.style.color = "#00ffcc";
-        line.style.fontWeight = "bold";
+        line.classList.add("tape-line--score");
       } else if (entry.includes("PLAYER")) {
-        line.style.color = "#e5c158";
+        line.classList.add("tape-line--player");
       } else if (entry.includes("COMPUTER")) {
-        line.style.color = "#a2b4ff";
+        line.classList.add("tape-line--computer");
       } else if (entry.includes("ROUND END")) {
-        line.style.color = "#ff4d4d";
-        line.style.fontWeight = "bold";
+        line.classList.add("tape-line--round");
       }
-      
       line.textContent = entry;
       tapeContainer.appendChild(line);
     });
@@ -901,7 +765,12 @@ function renderGame() {
   diagnosticSide.appendChild(tapeContainer);
 
   mainframe.appendChild(gameTableSide);
-  mainframe.appendChild(diagnosticSide);
+  
+  // Only show diagnostic panel on desktop
+  if (!isMobileDevice()) {
+    mainframe.appendChild(diagnosticSide);
+  }
+  
   appDiv.appendChild(mainframe);
 }
 

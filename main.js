@@ -27,7 +27,8 @@ let selectedBoneyardIndex = null;
 
 // --- Diagnostic Variables ---
 let liveCalculationText = "No tiles played yet.";
-let paperTapeHistory = []; 
+let paperTapeHistory = [];
+let diagnosticPanelVisible = true;
 
 // --- Mobile Detection ---
 function isMobileDevice() {
@@ -502,6 +503,17 @@ function renderGame() {
   `;
   gameTableSide.appendChild(scoreDiv);
 
+  if (!isMobileDevice()) {
+    const diagToggleBtn = document.createElement("button");
+    diagToggleBtn.className = "btn-diag-toggle";
+    diagToggleBtn.textContent = diagnosticPanelVisible ? "Hide Audit Tape" : "Show Audit Tape";
+    diagToggleBtn.onclick = () => {
+      diagnosticPanelVisible = !diagnosticPanelVisible;
+      renderGame();
+    };
+    gameTableSide.appendChild(diagToggleBtn);
+  }
+
   const turnBanner = document.createElement("div");
   turnBanner.className = "turn-banner";
   if (isGameOver) {
@@ -591,6 +603,8 @@ function renderGame() {
       boardDiv.appendChild(breakIndicator);
     }
 
+    console.log("visibleMoves for", name, visibleMoves);
+    console.log("branchArray for", name, branchArray);
     visibleMoves.forEach((move, index) => {
       const coordIndex = hasHiddenTiles ? index + 1 : index;
       const coord = pipelineCoords[coordIndex];
@@ -631,22 +645,23 @@ function renderGame() {
 
   const spinnerElement = document.createElement("div");
   spinnerElement.className = "spinner";
-  spinnerElement.style.gridColumn = "4";
-  spinnerElement.style.gridRow = "4";
+  spinnerElement.style.gridColumn = "5";
+  spinnerElement.style.gridRow = "5";
   spinnerElement.innerHTML = `⚙️<br>[${board.spinner[0]}·${board.spinner[1]}]`;
   boardDiv.appendChild(spinnerElement);
 
   // Coordinate Layout Maps
-  renderBranchRoute("up", [{ col: "4", row: "3", arrow: "▲" }, { col: "4", row: "2", arrow: "▲" }, { col: "4", row: "1", arrow: "▲" }]);
-  renderBranchRoute("left", [{ col: "3", row: "4", arrow: "◄" }, { col: "2", row: "4", arrow: "◄" }, { col: "1", row: "4", arrow: "◄" }]);
-  renderBranchRoute("right", [{ col: "5", row: "4", arrow: "►" }, { col: "6", row: "4", arrow: "►" }, { col: "7", row: "4", arrow: "►" }]);
-  renderBranchRoute("down", [{ col: "4", row: "5", arrow: "▼" }, { col: "4", row: "6", arrow: "▼" }, { col: "4", row: "7", arrow: "▼" }]);
+  renderBranchRoute("up", [{ col: "5", row: "4", arrow: "▲" }, { col: "5", row: "3", arrow: "▲" }, { col: "5", row: "2", arrow: "▲" }, { col: "5", row: "1", arrow: "▲" }]);
+  renderBranchRoute("left", [{ col: "4", row: "5", arrow: "◄" }, { col: "3", row: "5", arrow: "◄" }, { col: "2", row: "5", arrow: "◄" }, { col: "1", row: "5", arrow: "◄" }]);
+  renderBranchRoute("right", [{ col: "6", row: "5", arrow: "►" }, { col: "7", row: "5", arrow: "►" }, { col: "8", row: "5", arrow: "►" }, { col: "9", row: "5", arrow: "►" }]);
+  renderBranchRoute("down", [{ col: "5", row: "6", arrow: "▼" }, { col: "5", row: "7", arrow: "▼" }, { col: "5", row: "8", arrow: "▼" }, { col: "5", row: "9", arrow: "▼" }]);
   
   boardScaler.appendChild(boardDiv);
   boardWrapper.appendChild(boardScaler);
   gameTableSide.appendChild(boardWrapper);
 
   const playerNeedsToDraw = isPlayerTurn && !hasAnyValidMoves(playerHand) && boneyard.length > 0 && !isGameOver;
+  console.log("playerNeedsToDraw", playerNeedsToDraw);
   if (playerNeedsToDraw) {
     const drawSection = document.createElement("div");
     drawSection.className = "draw-section";
@@ -766,8 +781,7 @@ function renderGame() {
 
   mainframe.appendChild(gameTableSide);
   
-  // Only show diagnostic panel on desktop
-  if (!isMobileDevice()) {
+  if (!isMobileDevice() && diagnosticPanelVisible) {
     mainframe.appendChild(diagnosticSide);
   }
   

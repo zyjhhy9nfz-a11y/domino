@@ -61,7 +61,7 @@ body {
 .game-table {
   flex: 2 1 300px;
   min-width: 0;
-  max-width: 500px;
+  max-width: 600px;
   width: 100%;
 }
 
@@ -210,8 +210,8 @@ body {
 
 .board {
   display: grid;
-  grid-template-columns: 55px 55px 55px 75px 55px 55px 55px;
-  grid-template-rows: 45px 45px 45px 65px 45px 45px 45px;
+  grid-template-columns: 55px 55px 55px 55px 75px 55px 55px 55px 55px;
+  grid-template-rows: 45px 45px 45px 45px 65px 45px 45px 45px 45px;
   gap: 5px;
   justify-content: center;
   align-items: center;
@@ -434,6 +434,23 @@ button {
   margin-left: 6px;
   cursor: pointer;
   font-weight: bold;
+}
+
+.btn-diag-toggle {
+  display: block;
+  background: transparent;
+  color: #888;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  margin: 6px 0 0 auto;
+  cursor: pointer;
+}
+
+.btn-diag-toggle:hover {
+  color: #bbb;
+  border-color: #888;
 }
 
 .diagnostic-title {

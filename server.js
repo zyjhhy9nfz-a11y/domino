@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import os from 'os';
+import { printAccessUrls } from './print-access-urls.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,23 +35,6 @@ function resolveFilePath(urlPath) {
   return resolved;
 }
 
-function getLanAddress() {
-  try {
-    const ifaces = os.networkInterfaces();
-    for (const name of Object.keys(ifaces)) {
-      for (const iface of ifaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          return iface.address;
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error getting IP:', e.message);
-  }
-
-  return null;
-}
-
 if (!fs.existsSync(DIST_DIR)) {
   console.error('\n❌ dist/ folder not found. Run `npm run build` first, or use `npm run beta`.\n');
   process.exit(1);
@@ -82,16 +65,5 @@ http.createServer((req, res) => {
     res.end(data);
   });
 }).listen(PORT, HOST, () => {
-  const lanIP = getLanAddress();
-
-  console.log('\n🎲 Dominoes Beta Server Running!\n');
-  console.log('📱 Access from your devices (same Wi‑Fi):');
-  console.log(`   This Mac:       http://localhost:${PORT}`);
-  if (lanIP) {
-    console.log(`   Phone / Tablet: http://${lanIP}:${PORT}`);
-    console.log(`   Other devices:  http://${lanIP}:${PORT}`);
-  } else {
-    console.log('   (LAN IP not detected — use localhost on this Mac)');
-  }
-  console.log('\n   Tip: keep this Mac awake and allow incoming connections if macOS prompts.\n');
+  printAccessUrls(PORT, 'Beta Server');
 });

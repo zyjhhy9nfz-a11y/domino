@@ -65,16 +65,61 @@ body {
   width: 100%;
 }
 
-.diagnostic-panel {
-  flex: 1 1 240px;
+.audit-panel {
+  flex: 1 1 260px;
   min-width: 240px;
+  max-width: 500px;
   background: #1c1c1e;
   color: #3aee3a;
   font-family: ui-monospace, monospace;
-  padding: 15px;
   border-radius: 8px;
   box-shadow: inset 0 0 10px #000;
   text-align: left;
+  overflow: hidden;
+}
+
+.audit-toggle {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: 12px 14px;
+  border: none;
+  border-bottom: 1px solid #3aee3a;
+  background: #252528;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.audit-toggle:hover {
+  background: #2e2e32;
+}
+
+.audit-count {
+  color: #3aee3a;
+  font-weight: normal;
+}
+
+.audit-panel-body {
+  padding: 12px 15px 15px;
+}
+
+.audit-panel--collapsed .audit-panel-body {
+  display: none;
+}
+
+.audit-panel--collapsed .audit-toggle {
+  border-bottom: none;
+}
+
+.audit-debug-tools {
+  margin-bottom: 10px;
+}
+
+.tape-empty {
+  color: #777;
 }
 
 /* Score & status */
@@ -257,6 +302,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: help;
 }
 
 .branch-slot {
@@ -436,13 +482,6 @@ button {
   font-weight: bold;
 }
 
-.diagnostic-title {
-  margin-top: 0;
-  border-bottom: 1px solid #3aee3a;
-  padding-bottom: 5px;
-  color: #fff;
-}
-
 .tape-container {
   max-height: 450px;
   overflow-y: auto;
@@ -518,6 +557,12 @@ button {
 
   .draw-actions .btn-primary {
     width: 100%;
+  }
+
+  .audit-panel {
+    flex: 1 1 100%;
+    max-width: 100%;
+    order: 2;
   }
 }
 

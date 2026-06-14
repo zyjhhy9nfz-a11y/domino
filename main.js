@@ -27,13 +27,8 @@ let selectedBoneyardIndex = null;
 
 // --- Diagnostic Variables ---
 let liveCalculationText = "No tiles played yet.";
-let paperTapeHistory = []; 
-
-// --- Mobile Detection ---
-function isMobileDevice() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-    || window.matchMedia("(max-width: 768px)").matches;
-} 
+let paperTapeHistory = [];
+let auditTapeOpen = typeof window !== "undefined" && !window.matchMedia("(max-width: 768px)").matches;
 
 // --- 3. Shuffle Algorithm ---
 function shuffleBoneyard() {
@@ -486,9 +481,6 @@ function renderGame() {
   const gameTableSide = document.createElement("div");
   gameTableSide.className = "game-table";
 
-  const diagnosticSide = document.createElement("div");
-  diagnosticSide.className = "diagnostic-panel";
-
   const scoreDiv = document.createElement("div");
   scoreDiv.className = "score-panel";
   scoreDiv.innerHTML = `
@@ -566,26 +558,33 @@ function renderGame() {
     return badge;
   };
 
-  const createBreakBadge = () => {
+  const createBreakBadge = (hiddenCount) => {
     const breakBadge = document.createElement("div");
     breakBadge.className = "branch-break";
     breakBadge.textContent = "···";
+    breakBadge.title = `${hiddenCount} earlier tile${hiddenCount === 1 ? "" : "s"} on this branch`;
     return breakBadge;
   };
 
   const renderBranchRoute = (name, pipelineCoords) => {
     const branchArray = board.branches[name];
     const tipValue = getBranchTip(name);
+    const slotCount = pipelineCoords.length;
 
-    const maxVisible = 2; 
+    // Reserve one grid slot for the play button; when the branch overflows the board,
+    // also reserve one slot for the "···" indicator so the button always renders.
+    let maxVisible = Math.min(branchArray.length, slotCount - 1);
+    if (branchArray.length > maxVisible) {
+      maxVisible = Math.max(0, slotCount - 2);
+    }
+
     const hasHiddenTiles = branchArray.length > maxVisible;
-    
-    const startIndex = hasHiddenTiles ? branchArray.length - maxVisible : 0;
+    const startIndex = branchArray.length - maxVisible;
     const visibleMoves = branchArray.slice(startIndex);
 
     if (hasHiddenTiles) {
       const breakCoord = pipelineCoords[0];
-      const breakIndicator = createBreakBadge();
+      const breakIndicator = createBreakBadge(branchArray.length - maxVisible);
       breakIndicator.style.gridColumn = breakCoord.col;
       breakIndicator.style.gridRow = breakCoord.row;
       boardDiv.appendChild(breakIndicator);
@@ -594,7 +593,7 @@ function renderGame() {
     visibleMoves.forEach((move, index) => {
       const coordIndex = hasHiddenTiles ? index + 1 : index;
       const coord = pipelineCoords[coordIndex];
-      
+
       const isLatest = (startIndex + index === branchArray.length - 1);
       const badge = createTileBadge(move, isLatest, name);
       badge.style.gridColumn = coord.col;
@@ -604,29 +603,32 @@ function renderGame() {
 
     const buttonTargetIndex = hasHiddenTiles ? visibleMoves.length + 1 : visibleMoves.length;
     const targetCoord = pipelineCoords[buttonTargetIndex];
-    
-    if (targetCoord) {
-      const slotBtn = document.createElement("button");
-      slotBtn.className = "branch-slot";
-      slotBtn.style.gridColumn = targetCoord.col;
-      slotBtn.style.gridRow = targetCoord.row;
-      slotBtn.innerHTML = `${targetCoord.arrow}<br>(${tipValue})`;
 
-      if (selectedTileIndex !== null && isPlayerTurn && !isGameOver) {
-        const selectedTile = playerHand[selectedTileIndex];
-        if (isValidMove(selectedTile, name)) {
-          slotBtn.classList.add("branch-slot--valid");
-          slotBtn.onclick = () => playTileToBranch(name);
-        } else {
-          slotBtn.disabled = true;
-          slotBtn.classList.add("branch-slot--hidden");
-        }
+    if (!targetCoord) {
+      console.warn(`Missing play slot for ${name} branch (${branchArray.length} tiles)`);
+      return;
+    }
+
+    const slotBtn = document.createElement("button");
+    slotBtn.className = "branch-slot";
+    slotBtn.style.gridColumn = targetCoord.col;
+    slotBtn.style.gridRow = targetCoord.row;
+    slotBtn.innerHTML = `${targetCoord.arrow}<br>(${tipValue})`;
+
+    if (selectedTileIndex !== null && isPlayerTurn && !isGameOver) {
+      const selectedTile = playerHand[selectedTileIndex];
+      if (isValidMove(selectedTile, name)) {
+        slotBtn.classList.add("branch-slot--valid");
+        slotBtn.onclick = () => playTileToBranch(name);
       } else {
         slotBtn.disabled = true;
-        slotBtn.classList.add("branch-slot--dim");
+        slotBtn.classList.add("branch-slot--hidden");
       }
-      boardDiv.appendChild(slotBtn);
+    } else {
+      slotBtn.disabled = true;
+      slotBtn.classList.add("branch-slot--dim");
     }
+    boardDiv.appendChild(slotBtn);
   };
 
   const spinnerElement = document.createElement("div");
@@ -715,7 +717,28 @@ function renderGame() {
     gameTableSide.appendChild(restartBtn);
   }
 
-  diagnosticSide.innerHTML = `<h3 class="diagnostic-title">📋 Scoring Audit Tape</h3>`;
+  const auditPanel = document.createElement("aside");
+  auditPanel.className = auditTapeOpen ? "audit-panel" : "audit-panel audit-panel--collapsed";
+
+  const tapeEntryCount = paperTapeHistory.length;
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "audit-toggle";
+  toggleBtn.setAttribute("aria-expanded", String(auditTapeOpen));
+  toggleBtn.innerHTML = auditTapeOpen
+    ? `📋 Hide Audit Tape <span class="audit-count">(${tapeEntryCount})</span>`
+    : `📋 Show Audit Tape <span class="audit-count">(${tapeEntryCount})</span>`;
+  toggleBtn.onclick = () => {
+    auditTapeOpen = !auditTapeOpen;
+    renderGame();
+  };
+  auditPanel.appendChild(toggleBtn);
+
+  const auditBody = document.createElement("div");
+  auditBody.className = "audit-panel-body";
+
+  const debugTools = document.createElement("div");
+  debugTools.className = "audit-debug-tools";
 
   const debugBtn = document.createElement("button");
   debugBtn.className = "btn-debug";
@@ -729,8 +752,8 @@ function renderGame() {
       console.log(`${name}: ${getBranchTip(name)}`);
     });
   };
-  diagnosticSide.appendChild(debugBtn);
-  
+  debugTools.appendChild(debugBtn);
+
   const repairBtn = document.createElement("button");
   repairBtn.className = "btn-repair";
   repairBtn.textContent = "🔧 Repair State";
@@ -738,13 +761,14 @@ function renderGame() {
     repairBoardState("UI: State Repair Triggered");
     renderGame();
   };
-  diagnosticSide.appendChild(repairBtn);
-  
+  debugTools.appendChild(repairBtn);
+  auditBody.appendChild(debugTools);
+
   const tapeContainer = document.createElement("div");
   tapeContainer.className = "tape-container";
 
   if (paperTapeHistory.length === 0) {
-    tapeContainer.innerHTML = `<span style="color:#777">Tape is clean. Make a move to print calculations.</span>`;
+    tapeContainer.innerHTML = `<span class="tape-empty">Tape is clean. Make a move to print calculations.</span>`;
   } else {
     paperTapeHistory.forEach(entry => {
       const line = document.createElement("div");
@@ -762,15 +786,12 @@ function renderGame() {
       tapeContainer.appendChild(line);
     });
   }
-  diagnosticSide.appendChild(tapeContainer);
+  auditBody.appendChild(tapeContainer);
+  auditPanel.appendChild(auditBody);
 
   mainframe.appendChild(gameTableSide);
-  
-  // Only show diagnostic panel on desktop
-  if (!isMobileDevice()) {
-    mainframe.appendChild(diagnosticSide);
-  }
-  
+  mainframe.appendChild(auditPanel);
+
   appDiv.appendChild(mainframe);
 }
 

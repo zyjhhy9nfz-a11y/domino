@@ -344,7 +344,22 @@ if (tile.value1 === branchTip) {
 }
 ```
 
-### Scoring Logic (Louisiana Rules)
+### End-of-round sweep (domino & blocked game)
+
+When a round ends, the winner sweeps the loser's remaining hand pips for bonus points:
+
+```javascript
+// Round DOWN to nearest multiple of 5 — never up (4 pips → 0, not 5)
+const roundDownToFive = (pips) => Math.floor(pips / 5) * 5;
+```
+
+Implemented in `checkWinCondition()` in `main.js`.
+
+**Hobo scoring (future option):** This round-down sweep rule is the correct reference behavior. When `hobo-scoring` is added as a mode selector, preserve this logic for end-of-round points.
+
+**Louisiana (current default):** In-play scoring uses exposed branch tips; points are awarded only when the tip total is a multiple of 5 (see `evaluateBoardScore()`).
+
+### Scoring Logic (Louisiana Rules — in-play)
 
 ```javascript
 function calculateScore() {
@@ -454,10 +469,9 @@ container.appendChild(boneyardCount);
 
 ```javascript
 if (gameState.scoringVariant === 'louisiana') {
-  // Current logic: multiples of 5
+  // In-play: multiples of 5 on exposed branch tips (evaluateBoardScore)
 } else if (gameState.scoringVariant === 'hobo') {
-  // All pips count
-  points = total;
+  // In-play rules TBD; end-of-round sweep already uses roundDownToFive — keep that
 }
 ```
 

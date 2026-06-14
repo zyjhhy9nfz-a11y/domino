@@ -64,19 +64,15 @@ These tasks have the highest impact on user experience. Start here!
 
 ### Game Feedback Improvements
 
-- [ ] **AVAILABLE** | score-announcement
-  - Announce points scored in real time ("You score 15 points!")
-  - Show score pop-up when points earned
-  - Clear when branching doesn't score
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-score-announce`
+- [x] **DONE** (Session June 2026) | score-announcement
+  - Score pop-up when points are earned (player and computer)
+  - "No score" toast when a play doesn't score
+  - Feature branch: (integrated to main)
 
-- [ ] **AVAILABLE** | invalid-move-feedback
-  - Show why a move was rejected (branch full, tile no match, etc.)
-  - Display error message clearly instead of silent rejection
-  - Help player understand valid moves
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-move-feedback`
+- [x] **DONE** (Session June 2026) | invalid-move-feedback
+  - Rejection reasons for invalid moves (no match, no tile selected, etc.)
+  - Invalid branch slots visible with tap-to-explain feedback
+  - Feature branch: (integrated to main)
 
 - [x] **DONE** (Session June 2026) | turn-indicator
   - Turn banner for player, computer thinking, and game over
@@ -138,9 +134,10 @@ These add game variety and increase replayability.
 ### Scoring Variants
 
 - [ ] **AVAILABLE** | hobo-scoring
-  - Implement hobo scoring variant (all pips count)
-  - Add scoring mode selector (Louisiana vs Hobo)
-  - Update scoring display for variant
+  - Implement hobo scoring variant as a selectable mode (Louisiana vs Hobo)
+  - **End-of-round sweep (already implemented):** opponent's remaining pips are rounded **down** to the nearest multiple of 5 (`Math.floor(pips / 5) * 5`). Example: 4 pips → 0 sweep points. This is correct for Hobo — preserve `roundDownToFive` in `checkWinCondition()` when wiring the variant.
+  - In-play scoring rules for Hobo still TBD vs Louisiana (board multiples-of-5 today)
+  - Add scoring mode selector and update scoring display for variant
   - Test calculations match expected rules
   - **Blocked by**: (Phase 2 completion)
   - **Branch name**: `feat/[initials]-hobo-scoring`
@@ -273,6 +270,8 @@ Currently being worked on:
 
 Tasks finished in the last session(s):
 
+- ✅ **score-announcement** — Pop-up toasts for scoring and no-score plays
+- ✅ **invalid-move-feedback** — Rejection reasons with visible invalid branch slots
 - ✅ **mobile-responsive** — Mobile layout, touch targets, centered board
 - ✅ **turn-indicator** — Turn banner (player / computer / game over)
 - ✅ **boneyard-display** — Boneyard count in UI
@@ -324,14 +323,14 @@ This repo is **vanilla JavaScript only** (`main.js`, Vite, CSS). Do not add Pyth
 | Metric | Count |
 |--------|-------|
 | Total Tasks | 31 |
-| Completed | 6 |
+| Completed | 8 |
 | In Progress | 0 |
-| Available | 25 |
-| Phase 2 Priority | 6 remaining |
+| Available | 23 |
+| Phase 2 Priority | 4 remaining |
 
 ---
 
-**Next session:** See **SESSION_NOTES.md**. Start with `score-announcement` or `invalid-move-feedback`.
+**Next session:** See **SESSION_NOTES.md**. Start with `tile-visual-polish` or `animation-tile-placement`.
 
 ---
 

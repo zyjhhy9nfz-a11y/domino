@@ -27,6 +27,12 @@ The game is stable and playable on desktop and mobile (June 2026 session).
 - **Solution**: Reduce visible tiles when overflowing; always reserve a slot for the play button
 - **Status**: RESOLVED - Fixed in main.js `renderBranchRoute`
 
+### June 2026: Player tile display orientation ✅ FIXED
+- **Symptom**: Player moves showed wrong exposed pip (e.g. 2·0 on right branch with 0 open, looked like 0 was still exposed)
+- **Root Cause**: Player moves stored hand order `[2,0]`; display assumed `[inner, outer]` like computer moves
+- **Solution**: `orientTileForBranch()` stores all board tiles as `[innerEdge, outerEdge]`; repair normalizes legacy state
+- **Status**: RESOLVED
+
 ### June 2026: main.js Non-JavaScript Corruption ✅ FIXED
 - **Symptom**: Game failed to load; `main.js` was ~60 lines with Python syntax (`import sys`, `def init_game():`)
 - **Root Cause**: Accidental edit outside git (never committed)

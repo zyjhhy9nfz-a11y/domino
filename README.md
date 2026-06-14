@@ -195,10 +195,15 @@ Be the first player to get rid of all tiles (go "domino").
 5. If empty boneyard and can't play, pass
 6. Computer plays same rules
 
-### Scoring (Louisiana)
+### Scoring (Louisiana — in-play)
 - Branch tips are summed: up + down + left + right
 - If total is multiple of 5 (5, 10, 15, 20, etc.), score that many points
 - First to agreed total (usually 100) wins
+
+### End-of-round sweep
+- When someone dominoes (or wins a blocked game on lowest pips), sweep the opponent's remaining hand pips
+- Pips are rounded **down** to the nearest multiple of 5 (4 pips → 0 points, 9 → 5)
+- This sweep rule is the reference for the future **Hobo scoring** option (see `TODO.md`)
 
 ### Winning
 - Player with zero tiles after branching tips are counted = winner

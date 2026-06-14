@@ -23,7 +23,10 @@ let board = {
 };
 let gameLog = "";
 let selectedTileIndex = null;
-let selectedBoneyardIndex = null; 
+let selectedBoneyardIndex = null;
+let feedbackToast = null;
+let feedbackToastTimer = null;
+let moveFeedbackIsError = false;
 
 // --- Diagnostic Variables ---
 let liveCalculationText = "No tiles played yet.";
@@ -105,6 +108,25 @@ function getBranchTip(branchName) {
   return lastMove.outerEdge;
 }
 
+// Board tiles are stored as [innerEdge, outerEdge]: matching pip toward the chain, exposed pip outward.
+function orientTileForBranch(tile, tipValue) {
+  const isDouble = tile[0] === tile[1];
+  if (isDouble) {
+    return { tile: [tile[0], tile[0]], outerEdge: tile[0], isDouble: true };
+  }
+  const innerEdge = tipValue;
+  const outerEdge = tile[0] === tipValue ? tile[1] : tile[0];
+  return { tile: [innerEdge, outerEdge], outerEdge, isDouble: false };
+}
+
+function formatTileBadgeLabel(move, branchName) {
+  // move.tile is [innerEdge, outerEdge]; open end is left/up or right/down by branch.
+  if (branchName === "left" || branchName === "up") {
+    return `${move.tile[1]}·${move.tile[0]}`;
+  }
+  return `${move.tile[0]}·${move.tile[1]}`;
+}
+
 // --- 6.5. DEBUG TOOLS: State Inspection & Repair ---
 function dumpBoardState(label = "Board State Dump") {
   console.log(`\n=== ${label} ===`);
@@ -152,6 +174,13 @@ function repairBoardState(label = "State Repaired") {
         outerEdge = (tile[0] === connectorValue) ? tile[1] : tile[0];
       }
       
+      // Keep tile stored as [innerEdge, outerEdge] for consistent display
+      if (isDouble) {
+        move.tile = [outerEdge, outerEdge];
+      } else {
+        move.tile = [connectorValue, outerEdge];
+      }
+      
       // Update the stored outerEdge
       move.outerEdge = outerEdge;
       move.isDouble = isDouble;
@@ -171,6 +200,61 @@ function isValidMove(tile, branchName) {
   return tile[0] === tipValue || tile[1] === tipValue;
 }
 
+function formatBranchLabel(branchName) {
+  return branchName.charAt(0).toUpperCase() + branchName.slice(1);
+}
+
+function getMoveRejectionReason(tile, branchName) {
+  if (isGameOver) return "The game is over.";
+  if (!isPlayerTurn) return "Wait — it's the computer's turn.";
+  if (selectedTileIndex === null || !tile) return "Select a tile from your hand first.";
+
+  const tipValue = getBranchTip(branchName);
+  if (tipValue === null) {
+    return `The ${formatBranchLabel(branchName)} branch isn't open yet.`;
+  }
+  if (tile[0] !== tipValue && tile[1] !== tipValue) {
+    return `${tile[0]}·${tile[1]} doesn't match the exposed ${tipValue} on the ${branchName} branch.`;
+  }
+  return null;
+}
+
+function showFeedbackToast(message, variant, durationMs = 2500) {
+  feedbackToast = { message, variant };
+  if (feedbackToastTimer) clearTimeout(feedbackToastTimer);
+  feedbackToastTimer = setTimeout(() => {
+    feedbackToast = null;
+    feedbackToastTimer = null;
+    renderGame();
+  }, durationMs);
+}
+
+function showMoveError(message) {
+  gameLog = message;
+  moveFeedbackIsError = true;
+  showFeedbackToast(message, "error", 3000);
+}
+
+function announceScoreFeedback(pointsEarned, who) {
+  if (pointsEarned > 0) {
+    showFeedbackToast(
+      `+${pointsEarned} points!`,
+      who === "player" ? "score-player" : "score-computer"
+    );
+  } else {
+    showFeedbackToast("No score", "no-score", 1800);
+  }
+}
+
+function handleInvalidBranchClick(branchName) {
+  const tile = selectedTileIndex !== null ? playerHand[selectedTileIndex] : null;
+  const reason = getMoveRejectionReason(tile, branchName);
+  if (reason) {
+    showMoveError(reason);
+    renderGame();
+  }
+}
+
 function hasAnyValidMoves(hand) {
   const branchNames = ["left", "right", "up", "down"];
   return hand.some(tile => branchNames.some(name => isValidMove(tile, name)));
@@ -179,12 +263,14 @@ function hasAnyValidMoves(hand) {
 // --- 8. Check End-Game Conditions & Sweep Hand Pips ---
 function checkWinCondition() {
   const tallyHandPips = (hand) => hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
-  const roundToNearestFive = (pips) => Math.round(pips / 5) * 5;
+  // End-of-round sweep: round DOWN to the nearest multiple of 5 (4 pips → 0, 9 → 5).
+  // This is the correct rule for the future Hobo scoring option (see TODO.md / DEVELOPMENT.md).
+  const roundDownToFive = (pips) => Math.floor(pips / 5) * 5;
 
   if (playerHand.length === 0) {
     isGameOver = true;
     const rawPips = tallyHandPips(computerHand);
-    const endPoints = roundToNearestFive(rawPips);
+    const endPoints = roundDownToFive(rawPips);
     playerScore += endPoints;
 
     gameLog = `🎉 DOMINO! You win! Cleared your hand. Opponent held ${rawPips} pips. You earn +${endPoints} points!`;
@@ -195,7 +281,7 @@ function checkWinCondition() {
   if (computerHand.length === 0) {
     isGameOver = true;
     const rawPips = tallyHandPips(playerHand);
-    const endPoints = roundToNearestFive(rawPips);
+    const endPoints = roundDownToFive(rawPips);
     computerScore += endPoints;
 
     gameLog = `💻 Computer dominoed and won! You held ${rawPips} pips. Computer earns +${endPoints} points!`;
@@ -211,12 +297,12 @@ function checkWinCondition() {
     let finalSummary = `Board Blocked! Pips remaining: You (${playerPips}), Computer (${computerPips}). `;
     
     if (playerPips < computerPips) {
-      const swept = roundToNearestFive(computerPips);
+      const swept = roundDownToFive(computerPips);
       playerScore += swept;
       finalSummary += `You win lowest count! Swept hand for +${swept} points.`;
       paperTapeHistory.unshift(` [ROUND END] Blocked Game. Player wins lowest pips (${playerPips} vs ${computerPips}). Earned +${swept} pts.`);
     } else if (computerPips < playerPips) {
-      const swept = roundToNearestFive(playerPips);
+      const swept = roundDownToFive(playerPips);
       computerScore += swept;
       finalSummary += `Computer wins lowest count! Swept hand for +${swept} points.`;
       paperTapeHistory.unshift(` [ROUND END] Blocked Game. Computer wins lowest pips (${computerPips} vs ${playerPips}). Earned +${swept} pts.`);
@@ -271,42 +357,36 @@ function evaluateBoardScore(updateLiveDisplay = false, contextLabel = "") {
 
 // --- 10. Handle Placing a Tile onto a Branch ---
 function playTileToBranch(branchName) {
-  if (selectedTileIndex === null || !isPlayerTurn || isGameOver) return;
-  
-  const tile = playerHand[selectedTileIndex];
-  if (!isValidMove(tile, branchName)) return;
-
-  const tipValue = getBranchTip(branchName);
-  const isDouble = (tile[0] === tile[1]);
-  
-  // LOGIC FIX:
-  // If we play on a branch, the 'outerEdge' MUST be the number that 
-  // is NOT the tipValue.
-  let outerEdge = (tile[0] === tipValue) ? tile[1] : tile[0];
-  
-  if (isDouble) {
-    outerEdge = tile[0];
+  const tile = selectedTileIndex !== null ? playerHand[selectedTileIndex] : null;
+  const rejectionReason = getMoveRejectionReason(tile, branchName);
+  if (rejectionReason) {
+    showMoveError(rejectionReason);
+    renderGame();
+    return;
   }
 
-  // FORCE STORE:
-  // We store the tile exactly as the engine expects to read it later.
+  const tipValue = getBranchTip(branchName);
+  const { tile: orientedTile, outerEdge, isDouble } = orientTileForBranch(tile, tipValue);
+
   board.branches[branchName].push({ 
-    tile: tile, 
+    tile: orientedTile, 
     outerEdge: outerEdge, 
     isDouble: isDouble 
   });
   
   playerHand.splice(selectedTileIndex, 1);
   selectedTileIndex = null;
- 
+  moveFeedbackIsError = false;
+
   const pointsEarned = evaluateBoardScore(true, "PLAYER");
   if (pointsEarned > 0) {
     playerScore += pointsEarned;
     gameLog = `You scored ${pointsEarned} points on the ${branchName} branch!`;
   } else {
-    gameLog = `You played on the ${branchName} branch.`;
+    gameLog = `You played on the ${branchName} branch — no score.`;
   }
-  
+  announceScoreFeedback(pointsEarned, "player");
+
   if (checkWinCondition()) {
     renderGame();
     return;
@@ -415,28 +495,18 @@ function executeComputerTurn() {
 
   legalMoves.forEach(move => {
     const tipValue = getBranchTip(move.branchName);
-    const isDouble = (move.tile[0] === move.tile[1]);
-    
-    let innerEdge = tipValue;
-    let outerEdge = (move.tile[0] === tipValue) ? move.tile[1] : move.tile[0];
-    
-    if (isDouble) {
-      innerEdge = move.tile[0];
-      outerEdge = move.tile[0];
-    }
+    const oriented = orientTileForBranch(move.tile, tipValue);
 
-    const simulatedOriented = [innerEdge, outerEdge];
-    
-    board.branches[move.branchName].push({ tile: [...simulatedOriented], outerEdge: outerEdge, isDouble: isDouble });
+    board.branches[move.branchName].push({ ...oriented });
     let possibleScore = evaluateBoardScore(false, "");
     board.branches[move.branchName].pop(); 
 
     if (possibleScore > maximumPointsFound) {
       maximumPointsFound = possibleScore;
       bestMove = move;
-      optimizedOrientedTile = simulatedOriented;
-      optimizedOuterEdge = outerEdge;
-      optimizedIsDouble = isDouble;
+      optimizedOrientedTile = oriented.tile;
+      optimizedOuterEdge = oriented.outerEdge;
+      optimizedIsDouble = oriented.isDouble;
     }
   });
 
@@ -458,8 +528,9 @@ function executeComputerTurn() {
     computerScore += pointsEarned;
     gameLog = `Computer ${drawContext}scored ${pointsEarned} points on the ${bestMove.branchName} branch!`;
   } else {
-    gameLog = `Computer ${drawContext}played on the ${bestMove.branchName} branch.`;
+    gameLog = `Computer ${drawContext}played on the ${bestMove.branchName} branch — no score.`;
   }
+  announceScoreFeedback(pointsEarned, "computer");
 
   if (checkWinCondition()) {
     renderGame();
@@ -525,9 +596,18 @@ function renderGame() {
   gameTableSide.appendChild(liveCalcBox);
 
   const logBox = document.createElement("p");
-  logBox.className = "game-log";
+  logBox.className = moveFeedbackIsError ? "game-log game-log--error" : "game-log";
   if (!isGameOver) logBox.textContent = gameLog;
   gameTableSide.appendChild(logBox);
+
+  if (feedbackToast) {
+    const toast = document.createElement("div");
+    toast.className = `feedback-toast feedback-toast--${feedbackToast.variant}`;
+    toast.textContent = feedbackToast.message;
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    gameTableSide.appendChild(toast);
+  }
 
   const boardWrapper = document.createElement("div");
   boardWrapper.className = "board-wrapper";
@@ -550,11 +630,7 @@ function renderGame() {
       badge.classList.add("tile-badge--inactive");
     }
 
-    if (branchName === "left" || branchName === "up") {
-      badge.textContent = `${move.tile[1]}·${move.tile[0]}`;
-    } else {
-      badge.textContent = `${move.tile[0]}·${move.tile[1]}`;
-    }
+    badge.textContent = formatTileBadgeLabel(move, branchName);
     return badge;
   };
 
@@ -621,8 +697,10 @@ function renderGame() {
         slotBtn.classList.add("branch-slot--valid");
         slotBtn.onclick = () => playTileToBranch(name);
       } else {
-        slotBtn.disabled = true;
-        slotBtn.classList.add("branch-slot--hidden");
+        const rejectionReason = getMoveRejectionReason(selectedTile, name);
+        slotBtn.classList.add("branch-slot--invalid");
+        slotBtn.title = rejectionReason || "Invalid move";
+        slotBtn.onclick = () => handleInvalidBranchClick(name);
       }
     } else {
       slotBtn.disabled = true;
@@ -702,6 +780,7 @@ function renderGame() {
     if (isPlayerTurn && !isGameOver) {
       tileBtn.onclick = () => {
         selectedTileIndex = isSelected ? null : index;
+        moveFeedbackIsError = false;
         renderGame();
       };
     }
@@ -846,6 +925,12 @@ function initGame() {
   board.spinner = null;
   selectedTileIndex = null;
   selectedBoneyardIndex = null;
+  feedbackToast = null;
+  moveFeedbackIsError = false;
+  if (feedbackToastTimer) {
+    clearTimeout(feedbackToastTimer);
+    feedbackToastTimer = null;
+  }
   
   shuffleBoneyard();
   dealHands();

@@ -55,15 +55,22 @@ Console output prints URLs for this computer and phones on the same network.
 
 **Recommended next tasks** (Phase 2, highest impact):
 
-1. **score-announcement** — pop-up when points are scored
-2. **invalid-move-feedback** — explain rejected moves
-3. **tile-visual-polish** — pip styling, better tile appearance
+1. **tile-visual-polish** — pip styling, better tile appearance
+2. **animation-tile-placement** — smooth tile play animations
+3. **game-summary-screen** — dedicated end-of-game screen with stats
 
 **Optional infra:**
 - Off-network beta tunnel (ngrok / Cloudflare) for testers not on your Wi‑Fi
 - Fix `main.test.js` — needs jsdom environment in Vitest config
 
-**Phase 2 still open:** animations, game summary screen, move history log
+**Phase 2 still open:** tile visual polish, animations, game summary screen, move history log
+
+### Game feedback (this session)
+- **Score announcements** — pop-up toasts for +points and "No score"
+- **Invalid-move feedback** — rejection reasons; invalid branches stay visible and tappable
+
+### Scoring fix
+- **End-of-round sweep** — round down to nearest 5 (`4 pips → 0`, not 5). Documented as correct behavior for future **Hobo scoring** option (`TODO.md`, `DEVELOPMENT.md`).
 
 ---
 

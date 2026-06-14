@@ -195,7 +195,7 @@ function applyChainLinkSize(linkEl, branchName, isDouble) {
 }
 
 const MAX_VISIBLE_PER_BRANCH = 2;
-const MAX_VISIBLE_OPEN_END = 1;
+const MAX_VISIBLE_OPEN_END = 2;
 const MAX_HOBO_LINE_PER_SIDE = MAX_VISIBLE_PER_BRANCH;
 const BRANCH_ARROWS = { up: "▲", down: "▼", left: "◄", right: "►" };
 const HOBO_CENTER = "hobo:center";
@@ -1446,7 +1446,7 @@ function renderSettingsPanel(container) {
   toggle.type = "button";
   toggle.className = "settings-toggle";
   toggle.setAttribute("aria-expanded", String(settingsPanelOpen));
-  toggle.textContent = settingsPanelOpen ? "⚙️ Hide Settings" : "⚙️ Settings";
+  toggle.textContent = settingsPanelOpen ? "Hide settings" : "Settings";
   toggle.onclick = () => {
     settingsPanelOpen = !settingsPanelOpen;
     renderGame();
@@ -1593,33 +1593,52 @@ function renderGame() {
   gameTableSide.appendChild(renderGameTitle());
 
   const target = getGameTarget();
-  const scoreDiv = document.createElement("div");
-  scoreDiv.className = "score-panel";
-  scoreDiv.innerHTML = `
-    <div class="score-row">
-      <div class="score-player">You: ${playerScore} / ${target}</div>
-      <div class="score-computer">Computer: ${computerScore} / ${target}</div>
-    </div>
-    <div class="score-status">
-      ${isMatchOver ? "Game over" : `Round in progress · first to ${target} wins the game`}
-      · 🤖 ${computerHand.length} tiles · Boneyard: ${boneyard.length}
-    </div>
-  `;
-  gameTableSide.appendChild(scoreDiv);
+  const statusBar = document.createElement("div");
+  statusBar.className = "game-status";
 
-  const turnBanner = document.createElement("div");
-  turnBanner.className = "turn-banner";
+  const scoresRow = document.createElement("div");
+  scoresRow.className = "game-status__scores";
+  scoresRow.innerHTML = `
+    <span class="game-status__you">You <strong>${playerScore}</strong></span>
+    <span class="game-status__sep" aria-hidden="true">·</span>
+    <span class="game-status__cpu">CPU <strong>${computerScore}</strong></span>
+    <span class="game-status__target">to ${target}</span>
+    <span class="game-status__sep" aria-hidden="true">·</span>
+    <span class="game-status__meta">Boneyard ${boneyard.length}</span>
+  `;
+  statusBar.appendChild(scoresRow);
+
+  const turnLine = document.createElement("div");
+  turnLine.className = "turn-line";
   if (isMatchOver || isGameOver) {
-    turnBanner.classList.add("turn-banner--over");
-    turnBanner.textContent = gameLog;
+    turnLine.classList.add("turn-line--over");
+    turnLine.textContent = gameLog;
   } else if (isPlayerTurn) {
-    turnBanner.classList.add("turn-banner--player");
-    turnBanner.textContent = "Your turn — select a tile, then tap a branch";
+    turnLine.classList.add("turn-line--player");
+    turnLine.textContent = "Your turn · tap a branch";
   } else {
-    turnBanner.classList.add("turn-banner--computer");
-    turnBanner.textContent = "Computer is thinking…";
+    turnLine.classList.add("turn-line--computer");
+    turnLine.textContent = "Computer thinking…";
   }
-  gameTableSide.appendChild(turnBanner);
+  statusBar.appendChild(turnLine);
+
+  const showBoardPips = boardHasAnyTiles() && liveCalculationText !== "No tiles played yet.";
+  if (showBoardPips) {
+    const pipsLine = document.createElement("p");
+    pipsLine.className = "board-pips";
+    pipsLine.textContent = liveCalculationText;
+    statusBar.appendChild(pipsLine);
+  }
+
+  const showLastAction = gameLog && !isGameOver && !isMatchOver && !moveFeedbackIsError;
+  if (showLastAction) {
+    const lastAction = document.createElement("p");
+    lastAction.className = "last-action";
+    lastAction.textContent = gameLog;
+    statusBar.appendChild(lastAction);
+  }
+
+  gameTableSide.appendChild(statusBar);
 
   const opponentHandDiv = document.createElement("div");
   opponentHandDiv.className = "opponent-rack";
@@ -1639,15 +1658,12 @@ function renderGame() {
   });
   gameTableSide.appendChild(opponentHandDiv);
 
-  const liveCalcBox = document.createElement("div");
-  liveCalcBox.className = "live-calc";
-  liveCalcBox.innerHTML = `<span style="color:#555">Live Board Pips:</span> ${liveCalculationText}`;
-  gameTableSide.appendChild(liveCalcBox);
-
-  const logBox = document.createElement("p");
-  logBox.className = moveFeedbackIsError ? "game-log game-log--error" : "game-log";
-  if (!isGameOver) logBox.textContent = gameLog;
-  gameTableSide.appendChild(logBox);
+  if (moveFeedbackIsError && gameLog) {
+    const logBox = document.createElement("p");
+    logBox.className = "game-log game-log--error";
+    logBox.textContent = gameLog;
+    gameTableSide.appendChild(logBox);
+  }
 
   if (feedbackToast) {
     const toast = document.createElement("div");
@@ -1865,7 +1881,9 @@ function renderGame() {
         if (playSlot) openEnd.appendChild(playSlot);
       } else if (branchArray.length >= 2) {
         appendTileLink(spinnerEnd, branchArray[0], false);
-        appendTileLink(openEnd, branchArray[1], true);
+        for (let i = 1; i < branchArray.length; i++) {
+          appendTileLink(openEnd, branchArray[i], i === branchArray.length - 1);
+        }
         if (playSlot) openEnd.appendChild(playSlot);
       } else if (branchArray.length === 1) {
         appendTileLink(spinnerEnd, branchArray[0], true);
@@ -2225,6 +2243,51 @@ window.previewHouseSingleLeftBranch = function() {
   renderGame();
 };
 
+window.previewHouseTwoTileLeftBranch = function() {
+  gameSettings.rulesMode = "house";
+  isGameOver = false;
+  isPlayerTurn = true;
+  board.spinner = [6, 6];
+  board.branches = {
+    left: [
+      { tile: [6, 5], outerEdge: 5, isDouble: false },
+      { tile: [5, 4], outerEdge: 4, isDouble: false },
+    ],
+    right: [],
+    up: [],
+    down: [],
+  };
+  playerHand = [[4, 3], [0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]];
+  renderGame();
+};
+
+window.previewHouseThreeTileLeftBranch = function() {
+  gameSettings.rulesMode = "house";
+  isGameOver = false;
+  isPlayerTurn = true;
+  board.spinner = [6, 6];
+  board.branches = {
+    left: [
+      { tile: [6, 2], outerEdge: 2, isDouble: false },
+      { tile: [2, 5], outerEdge: 5, isDouble: false },
+      { tile: [5, 4], outerEdge: 4, isDouble: false },
+    ],
+    right: [{ tile: [6, 0], outerEdge: 0, isDouble: false }],
+    up: [
+      { tile: [6, 5], outerEdge: 5, isDouble: false },
+      { tile: [5, 5], outerEdge: 5, isDouble: true },
+      { tile: [5, 5], outerEdge: 5, isDouble: true },
+    ],
+    down: [
+      { tile: [6, 5], outerEdge: 5, isDouble: false },
+      { tile: [5, 6], outerEdge: 6, isDouble: false },
+      { tile: [6, 6], outerEdge: 6, isDouble: true },
+    ],
+  };
+  playerHand = [[4, 0], [1, 0], [4, 4], [0, 0], [4, 3]];
+  renderGame();
+};
+
 window.previewHouseLongLeftBranch = function() {
   gameSettings.rulesMode = "house";
   hoboCenterLineActive = true;
@@ -2247,11 +2310,11 @@ window.previewHouseLongLeftBranch = function() {
   setTimeout(() => {
     const arm = document.querySelector(".board-arm--left");
     const slot = arm?.querySelector(".chain-link--slot");
-    const outerTile = arm?.querySelector(".board-tile");
     const br = arm?.querySelector(".branch-break");
+    const outerTiles = arm?.querySelectorAll(".branch-open-end .board-tile");
     console.log("Long left branch layout:", {
       hasBreak: !!br,
-      hasOuterTile: !!outerTile,
+      openEndTileCount: outerTiles?.length ?? 0,
       slotVisible: !!slot && slot.getBoundingClientRect().width > 0,
       armScrollLeft: arm?.scrollLeft,
     });
@@ -2341,6 +2404,16 @@ window.runHouseRulesChecklist = function() {
   check("House branch move valid", isValidMove([6, 5], "left"));
   check("House uses House in-play scoring path", evaluateBoardScore(false, "TEST") === evaluateBoardScoreHouse(false, "TEST"));
   check("House sweep rounds down 7 → 5", roundSweepPips(7) === 5);
+
+  const threeTileBranch = [
+    { tile: [6, 2], outerEdge: 2, isDouble: false },
+    { tile: [2, 5], outerEdge: 5, isDouble: false },
+    { tile: [5, 4], outerEdge: 4, isDouble: false },
+  ];
+  const threeTileVisibility = getVisibleBranchSegments(threeTileBranch);
+  check("3-tile branch triggers overflow (···)", threeTileVisibility.hiddenCount === 1);
+  check("3-tile branch shows 2 open-end tiles", threeTileVisibility.outer.length === 2);
+  check("3-tile open-end is latest two tiles", threeTileVisibility.outer[0].tile[1] === 5 && threeTileVisibility.outer[1].tile[1] === 4);
 
   gameSettings.rulesMode = savedRules;
   board.spinner = null;

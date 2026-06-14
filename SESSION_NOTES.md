@@ -1,6 +1,6 @@
 # Session Notes — June 2026
 
-**Branch:** `main` (pushed)  
+**Branch:** `main` (pushed — `be90233`)  
 **Status:** 🟢 Playable — mobile viewport layout + settings polish complete; compact boneyard next
 
 ---

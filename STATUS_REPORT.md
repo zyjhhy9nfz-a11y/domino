@@ -4,7 +4,7 @@
 
 **Status:** 🟢 Playable — mobile viewport layout + settings polish complete
 
-**Branch:** `main`
+**Branch:** `main` · **Commit:** `be90233` (pushed)
 
 See **SESSION_NOTES.md** for full handoff.
 

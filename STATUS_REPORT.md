@@ -1,5 +1,23 @@
 # Louisiana Dominos Game - Status Report
 
+## Latest Session (June 2026)
+
+**Status:** 🟢 Playable on desktop and mobile; LAN beta hosting ready
+
+See **SESSION_NOTES.md** for full wrap-up and next-session priorities.
+
+### Shipped this session
+- Mobile-responsive UI with centered spinner
+- Long-branch play fix
+- Collapsible scoring audit tape
+- Turn banner and boneyard count
+- LAN beta: `npm run dev` / `npm run beta` with local + Wi‑Fi URLs in console
+
+### Next up (Phase 2)
+- Score announcements, invalid-move feedback, tile visual polish
+
+---
+
 ## ✅ GAME IS UP AND RUNNING!
 
 Your domino game prototype is now **fully functional** with a critical bug fix applied.

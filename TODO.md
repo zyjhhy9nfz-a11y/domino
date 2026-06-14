@@ -1,7 +1,7 @@
 # Louisiana Dominoes Game - Task Tracker
 
-**Status**: 🟢 Core game complete, ready for team development  
-**Last Updated**: 2026-05-30
+**Status**: 🟢 Core game complete, mobile-ready, LAN beta hosting  
+**Last Updated**: 2026-06-14
 
 ---
 
@@ -41,13 +41,11 @@ These tasks have the highest impact on user experience. Start here!
 
 ### Visual & Layout Improvements
 
-- [ ] **AVAILABLE** | mobile-responsive
-  - Make game responsive for iPhone mini (375px portrait)
-  - Redesign flex layout to work on small screens
-  - Touch-friendly tap targets (48x48px minimum for buttons)
-  - Test on: iPhone 12 mini, iPad, desktop
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-mobile-responsive`
+- [x] **DONE** (Session June 2026) | mobile-responsive
+  - Responsive layout for iPhone mini (375px portrait)
+  - Touch-friendly tap targets (48×48px minimum)
+  - Board scales and centers on small screens
+  - Feature branch: (integrated to main)
 
 - [ ] **AVAILABLE** | tile-visual-polish
   - Improve tile styling with pip details
@@ -80,19 +78,13 @@ These tasks have the highest impact on user experience. Start here!
   - **Blocked by**: (none)
   - **Branch name**: `feat/[initials]-move-feedback`
 
-- [ ] **AVAILABLE** | turn-indicator
-  - Visual indication of whose turn it is (player or computer)
-  - Highlight current player
-  - Show when computer is thinking
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-turn-indicator`
+- [x] **DONE** (Session June 2026) | turn-indicator
+  - Turn banner for player, computer thinking, and game over
+  - Feature branch: (integrated to main)
 
-- [ ] **AVAILABLE** | boneyard-display
-  - Show how many tiles remain in boneyard
-  - Display it near the draw button
-  - Update as tiles are drawn
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-boneyard-count`
+- [x] **DONE** (Session June 2026) | boneyard-display
+  - Count shown in score panel and draw section
+  - Feature branch: (integrated to main)
 
 ### Game Flow Improvements
 
@@ -261,6 +253,10 @@ Found a bug? Add it here!
 
 - **None currently known** ✅
 
+### Resolved outside task list (Session June 2026)
+- **Long-branch play button missing** — fixed slot overflow when branches exceed 3 tiles
+- **main.js Python corruption** — accidental non-JS edit broke the game; restored from git (see SESSION_NOTES.md)
+
 Check **BLOCKERS.md** for blockers and what's preventing progress.
 
 ---
@@ -277,14 +273,23 @@ Currently being worked on:
 
 Tasks finished in the last session(s):
 
+- ✅ **mobile-responsive** — Mobile layout, touch targets, centered board
+- ✅ **turn-indicator** — Turn banner (player / computer / game over)
+- ✅ **boneyard-display** — Boneyard count in UI
+- ✅ **long-branch-overflow** — Play button when branches get long
+- ✅ **audit-tape-toggle** — Collapsible scoring audit tape
+- ✅ **lan-beta-hosting** — `npm run beta`, network URLs on startup
 - ✅ **game-engine** — Core gameplay mechanics
 - ✅ **bug-fix-branch-tips** — Fixed move validation
 - ✅ **basic-ui** — Initial board and hand display
-- ✅ **plan-roadmap** — Development plan created
 
 ---
 
 ## Notes for Team
+
+### Code language — JavaScript only ⚠️
+
+This repo is **vanilla JavaScript only** (`main.js`, Vite, CSS). Do not add Python or other languages to game source files. If `main.js` looks wrong (very short file, `def`, `import sys`), run `git restore main.js` before continuing. See **SESSION_NOTES.md**.
 
 ### Starting Your First Task?
 1. Pick a task from Phase 2 (highest priority)
@@ -319,16 +324,16 @@ Tasks finished in the last session(s):
 | Metric | Count |
 |--------|-------|
 | Total Tasks | 31 |
-| Completed | 3 |
+| Completed | 6 |
 | In Progress | 0 |
-| Available | 28 |
-| Phase 2 Priority | 9 |
+| Available | 25 |
+| Phase 2 Priority | 6 remaining |
 
 ---
 
-**Next Team Member**: Start with Phase 2! Mobile responsiveness is the #1 blocker for making the game usable. Thanks for your help! 🚀
+**Next session:** See **SESSION_NOTES.md**. Start with `score-announcement` or `invalid-move-feedback`.
 
 ---
 
-*Last updated: 2026-05-30 by AI Session*  
+*Last updated: 2026-06-14*  
 *Update this file every time you claim, start, or complete a task*

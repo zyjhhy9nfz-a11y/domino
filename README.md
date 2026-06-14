@@ -72,6 +72,7 @@ dominoes-proto/
 ├── DEVELOPMENT.md         # Technical architecture & implementation details
 ├── TODO.md                # Task tracker for team members
 ├── BLOCKERS.md            # Known bugs and blockers
+├── SESSION_NOTES.md       # Latest session wrap-up and handoff
 ├── plan.md                # Development roadmap (4 phases)
 │
 └── node_modules/          # Dependencies (npm, not in git)

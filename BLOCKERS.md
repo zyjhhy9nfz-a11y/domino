@@ -8,7 +8,7 @@ Issues discovered during development. Add here when you find bugs or blockers!
 
 ### None at this time ✅
 
-The game is stable and playable after bug fixes in Session 2.
+The game is stable and playable on desktop and mobile (June 2026 session).
 
 ---
 
@@ -20,6 +20,18 @@ The game is stable and playable after bug fixes in Session 2.
 - **Solution**: Use explicit `outerEdge` field instead of array index
 - **Status**: RESOLVED - Fixed in main.js
 - **Verified**: Tested with 6·0, 4·0, 0·5 on exposed 0
+
+### June 2026: Long Branch Play Button Missing ✅ FIXED
+- **Symptom**: Valid moves rejected on screen when a branch had 3+ tiles (no branch button rendered)
+- **Root Cause**: UI grid has 3 slots per direction; overflow layout needed 4 (··· + 2 tiles + button)
+- **Solution**: Reduce visible tiles when overflowing; always reserve a slot for the play button
+- **Status**: RESOLVED - Fixed in main.js `renderBranchRoute`
+
+### June 2026: main.js Non-JavaScript Corruption ✅ FIXED
+- **Symptom**: Game failed to load; `main.js` was ~60 lines with Python syntax (`import sys`, `def init_game():`)
+- **Root Cause**: Accidental edit outside git (never committed)
+- **Solution**: `git restore main.js`; add SESSION_NOTES.md warning — **JavaScript only, no Python in game source**
+- **Status**: RESOLVED - Prevention documented for future sessions
 
 ---
 
@@ -93,14 +105,26 @@ If a task is blocking your work:
 
 ---
 
-## Mobile Issues (To Be Fixed in Phase 2)
+## Mobile Issues ✅ RESOLVED (June 2026)
 
-- [ ] Layout breaks on small screens (iPhone mini)
-- [ ] Touch targets too small for reliable tapping
-- [ ] Board doesn't scroll properly
-- [ ] Tiles overflow on narrow screens
+- [x] Layout breaks on small screens (iPhone mini) — fixed
+- [x] Touch targets too small — 48px minimum applied
+- [x] Board overflow / off-center spinner — scaling and centering fixed
+- [x] Audit tape always visible on mobile — now collapsible toggle
 
-These are addressed in Phase 2 tasks.
+---
+
+## Developer Notes
+
+### JavaScript only — do not mix languages
+
+All game code must stay in **JavaScript** (`.js` files). This project does not use Python. A corrupted `main.js` once contained Python syntax and broke the entire game. Before committing changes to `main.js`, confirm:
+
+- File is ~850 lines (not ~60)
+- No `def`, `import sys`, or other non-JS syntax
+- `npm run dev` loads the game without console errors
+
+See **SESSION_NOTES.md** for recovery steps (`git restore main.js`).
 
 ---
 
@@ -111,7 +135,7 @@ These are addressed in Phase 2 tasks.
 - **No persistence** - Game lost on page refresh
 - **No animations** - Instant tile placement
 - **No sound** - Silent game
-- **No mobile layout** - Desktop-first CSS
+- **Scoring audit only** - Audit tape shows scoring math, not a full move-by-move log (see move-history-log task)
 
 These are tracked in Phase 2+ planning.
 
@@ -141,5 +165,5 @@ Found and fixed a bug? Excellent! Follow this process:
 
 ---
 
-**Last Updated**: 2026-05-30  
+**Last Updated**: 2026-06-14  
 **Update this file when**: Finding bugs, discovering blockers, or resolving issues

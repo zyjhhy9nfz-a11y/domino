@@ -11,6 +11,8 @@
   --danger: #d9381e;
   --touch-min: 48px;
   --board-scale: 1;
+  --board-width: 435px;
+  --board-height: 365px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -237,6 +239,8 @@ body {
 
 /* Board */
 .board-wrapper {
+  display: flex;
+  justify-content: center;
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -245,12 +249,10 @@ body {
 }
 
 .board-scaler {
-  display: flex;
-  justify-content: center;
+  flex-shrink: 0;
   transform: scale(var(--board-scale));
-  transform-origin: top center;
-  width: calc(100% / var(--board-scale));
-  margin: 0 auto;
+  transform-origin: center top;
+  margin-bottom: calc(var(--board-height) * (var(--board-scale) - 1));
 }
 
 .board {
@@ -258,8 +260,11 @@ body {
   grid-template-columns: 55px 55px 55px 75px 55px 55px 55px;
   grid-template-rows: 45px 45px 45px 65px 45px 45px 45px;
   gap: 5px;
+  width: var(--board-width);
+  height: var(--board-height);
   justify-content: center;
   align-items: center;
+  margin: 0 auto;
 }
 
 .tile-badge {
@@ -534,6 +539,10 @@ button {
 
   .game-table {
     max-width: 100%;
+  }
+
+  .board-wrapper {
+    justify-content: center;
   }
 
   .score-panel {

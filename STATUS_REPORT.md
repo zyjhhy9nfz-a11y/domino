@@ -2,30 +2,34 @@
 
 ## Latest Session (June 2026 — end of day)
 
-**Status:** 🟢 Playable — Hobo rules complete; House mobile branch layout shipped (polish pass next)
+**Status:** 🟢 Playable — House layout + mobile UI polish complete
+
+**Branch:** `main` · **Commit:** `91f45d7` (pushed)
 
 See **SESSION_NOTES.md** for full handoff.
 
-### Shipped today (`9b0fc7c`)
-- **House rules mobile layout:** split left/right arms (open-end vs spinner-end), long-branch scroll, compact `···` badge
-- **Empty-branch slots:** left/right play affordances pinned to spinner side (matching up/down)
-- **Debug:** `previewHouseEmptySpinner()`, `previewHouseSingleLeftBranch()`, `previewHouseLongLeftBranch()`, `runHouseRulesChecklist()` (6/6)
+### Shipped today (`91f45d7`)
+- **House branch layout:** overflow fix (3-tile `···` + 2 visible), arms flush with spinner, 2-tile open-end on long branches
+- **Mobile tile scale:** unified `--tile-scale` — board/hand match; no transform layout gap
+- **Compact status bar:** scores `to 150`, Boneyard count, slim turn line; dropped computer tile count (visible in opponent rack)
+- **Hand zones:** bordered player hand + computer opponent rack
+- **Settings:** minimal text link (no gear, no rule above)
+- **Checklist:** `runHouseRulesChecklist()` 9/9
 
-### Prior session (`dee07d3`)
-- **Hobo rules:** center-line opening, line → spinner transition, 4-arm hub layout
-- **Hobo scoring:** phase-aware in-play scoring verified (13/13)
-- Blocked-round opener, game target score, up/down slots flush with spinner
+### Prior sessions
+- **`9b0fc7c`** — House L/R arm split, empty-branch slots, long-branch scroll
+- **`dee07d3`** — Hobo rules + scoring (13/13), spinner hub, blocked rounds
 
 ### Next up
-1. **`house-branch-layout`** — verify placement affordances on real phone; tune 1-tile / long-branch states
+1. **`compact-boneyard-display`** — shrink draw section on mobile
 2. **`animation-tile-placement`**
-3. game summary → move history log
+3. game-summary-screen → move-history-log
 
 ---
 
 ## ✅ GAME IS UP AND RUNNING!
 
-Your domino game prototype is now **fully functional** with House and Hobo rule variants.
+Domino game prototype is **fully functional** with House and Hobo rule variants. Mobile-tested on iPhone (375px).
 
 ---
 
@@ -58,9 +62,10 @@ Changed `getBranchTip()` to use the explicitly stored `outerEdge` value.
 ### UI Features
 - ✅ CSS pip dominoes with settings (pips/color, numerals, House/Hobo)
 - ✅ Visual board display with spinner hub and Hobo center-line phase
-- ✅ Score toasts, turn banner, invalid-move feedback
+- ✅ Compact status bar, score toasts, invalid-move feedback
+- ✅ Bordered player hand + opponent rack
 - ✅ Scoring audit tape (collapsible)
-- ✅ Mobile-responsive layout; House long-branch scroll on horizontal arms
+- ✅ Mobile-responsive layout; unified tile scale; House long-branch scroll
 
 ### Debug Tools
 - ✅ Debug State / Repair State buttons
@@ -77,4 +82,4 @@ npm run beta   # LAN testing on port 3000
 
 ---
 
-**Status**: 🟢 READY FOR HOUSE LAYOUT POLISH, THEN PHASE 2 ANIMATIONS
+**Status**: 🟢 READY FOR COMPACT BONEYARD, THEN ANIMATIONS

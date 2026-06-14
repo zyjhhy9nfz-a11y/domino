@@ -1,7 +1,7 @@
 # Louisiana Dominoes Game - Task Tracker
 
-**Status**: 🟢 Core game complete, visual polish + settings done, mobile-ready, LAN beta hosting  
-**Last Updated**: 2026-06-14
+**Status**: 🟢 House layout + mobile UI polish done; compact boneyard next  
+**Last Updated**: 2026-06-14 (pushed `91f45d7`)
 
 ---
 

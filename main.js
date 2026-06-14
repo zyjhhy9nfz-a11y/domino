@@ -12,11 +12,17 @@ const FULL_DECK = [
 // --- 1b. User settings (persisted) ---
 const SETTINGS_STORAGE_KEY = "houseDominoesSettings";
 const DEFAULT_SETTINGS = {
-  pipStyle: "black",
+  tileDisplay: "black-pips",
   rulesMode: "house",
-  displayMode: "pips",
   gameTarget: 150,
 };
+
+const TILE_DISPLAY_OPTIONS = [
+  ["black-pips", "Black pips"],
+  ["color-pips", "Color pips"],
+  ["numerals", "Numerals"],
+];
+const TILE_DISPLAY_VALUES = TILE_DISPLAY_OPTIONS.map(([value]) => value);
 
 const GAME_TARGET_OPTIONS = [100, 150, 200, 250, 300];
 
@@ -42,23 +48,53 @@ const PIP_LAYOUTS = {
   6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]],
 };
 
+function normalizeSettings(raw) {
+  const settings = { ...DEFAULT_SETTINGS, ...raw };
+  settings.gameTarget = Number(settings.gameTarget);
+  if (!GAME_TARGET_OPTIONS.includes(settings.gameTarget)) {
+    settings.gameTarget = DEFAULT_SETTINGS.gameTarget;
+  }
+
+  if (!TILE_DISPLAY_VALUES.includes(settings.tileDisplay)) {
+    const displayMode = raw.displayMode ?? "pips";
+    const pipStyle = raw.pipStyle ?? "black";
+    if (displayMode === "numerals") {
+      settings.tileDisplay = "numerals";
+    } else if (displayMode === "auto") {
+      const preferNumerals = typeof window !== "undefined"
+        && window.matchMedia("(max-width: 480px)").matches;
+      settings.tileDisplay = preferNumerals
+        ? "numerals"
+        : (pipStyle === "color" ? "color-pips" : "black-pips");
+    } else if (pipStyle === "color") {
+      settings.tileDisplay = "color-pips";
+    } else {
+      settings.tileDisplay = "black-pips";
+    }
+  }
+
+  delete settings.pipStyle;
+  delete settings.displayMode;
+  return settings;
+}
+
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
-    parsed.gameTarget = Number(parsed.gameTarget);
-    if (!GAME_TARGET_OPTIONS.includes(parsed.gameTarget)) {
-      parsed.gameTarget = DEFAULT_SETTINGS.gameTarget;
-    }
-    return parsed;
+    return normalizeSettings(JSON.parse(raw));
   } catch {
     return { ...DEFAULT_SETTINGS };
   }
 }
 
 function saveSettings() {
-  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(gameSettings));
+  const persisted = {
+    tileDisplay: gameSettings.tileDisplay,
+    rulesMode: gameSettings.rulesMode,
+    gameTarget: gameSettings.gameTarget,
+  };
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(persisted));
 }
 
 function pipWord(value) {
@@ -73,14 +109,12 @@ function tileAriaLabel(top, bottom) {
 }
 
 function shouldUseNumerals() {
-  if (gameSettings.displayMode === "numerals") return true;
-  if (gameSettings.displayMode === "pips") return false;
-  return typeof window !== "undefined" && window.matchMedia("(max-width: 480px)").matches;
+  return gameSettings.tileDisplay === "numerals";
 }
 
 function getPipColor(value) {
   if (value === 0) return "transparent";
-  if (gameSettings.pipStyle === "color") return PIP_COLORS[value] ?? "#1a1a1a";
+  if (gameSettings.tileDisplay === "color-pips") return PIP_COLORS[value] ?? "#1a1a1a";
   return "#1a1a1a";
 }
 
@@ -366,6 +400,109 @@ let hoboCenterLineActive = true;
 let liveCalculationText = "No tiles played yet.";
 let paperTapeHistory = [];
 let auditTapeOpen = typeof window !== "undefined" && !window.matchMedia("(max-width: 768px)").matches;
+
+const VIEWPORT_FILL_MQ = typeof window !== "undefined"
+  ? window.matchMedia("(max-width: 768px)")
+  : null;
+let viewportLayoutFrame = null;
+let boardFillMinHPeak = 0;
+
+function elementOuterHeight(el) {
+  if (!el) return 0;
+  const rect = el.getBoundingClientRect();
+  const style = getComputedStyle(el);
+  return rect.height
+    + (parseFloat(style.marginTop) || 0)
+    + (parseFloat(style.marginBottom) || 0);
+}
+
+function readCssLength(varName, fallback = 0) {
+  if (typeof document === "undefined") return fallback;
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;height:var(--probe-h);";
+  probe.style.setProperty("--probe-h", `var(${varName})`);
+  document.body.appendChild(probe);
+  const height = probe.getBoundingClientRect().height;
+  probe.remove();
+  return height || fallback;
+}
+
+function shouldFillViewport() {
+  return VIEWPORT_FILL_MQ?.matches ?? false;
+}
+
+function resetBoardFillLayout() {
+  boardFillMinHPeak = 0;
+  if (typeof document !== "undefined") {
+    document.documentElement.style.removeProperty("--board-fill-min-h");
+  }
+}
+
+function applyViewportLayout() {
+  if (typeof document === "undefined") return;
+
+  const useFill = shouldFillViewport();
+  document.documentElement.classList.toggle("viewport-fill", useFill);
+
+  const boardWrapper = document.querySelector(".board-wrapper");
+  if (!useFill || !boardWrapper) {
+    resetBoardFillLayout();
+    return;
+  }
+
+  const gameTable = document.querySelector(".game-table");
+  const mainframe = document.querySelector(".mainframe");
+  if (!gameTable || !mainframe) return;
+
+  const viewportH = window.visualViewport?.height ?? window.innerHeight;
+  const bodyStyle = getComputedStyle(document.body);
+  const bodyPadding = (parseFloat(bodyStyle.paddingTop) || 0)
+    + (parseFloat(bodyStyle.paddingBottom) || 0);
+
+  let fixedH = bodyPadding;
+  for (const child of mainframe.children) {
+    if (child === gameTable) {
+      for (const tableChild of gameTable.children) {
+        if (tableChild !== boardWrapper) {
+          fixedH += elementOuterHeight(tableChild);
+        }
+      }
+    } else {
+      fixedH += elementOuterHeight(child);
+    }
+  }
+
+  const mainframeStyle = getComputedStyle(mainframe);
+  const gapCount = Math.max(0, mainframe.children.length - 1);
+  fixedH += (parseFloat(mainframeStyle.gap) || 0) * gapCount;
+
+  const boardStyle = getComputedStyle(boardWrapper);
+  fixedH += (parseFloat(boardStyle.marginTop) || 0) + (parseFloat(boardStyle.marginBottom) || 0);
+
+  const anchorMin = readCssLength("--board-anchor-min-h", 140);
+  const maxFill = readCssLength("--board-max-fill-h", anchorMin);
+  const viewportTarget = Math.max(viewportH - fixedH, anchorMin);
+  const candidate = Math.min(viewportTarget, maxFill);
+  boardFillMinHPeak = Math.max(boardFillMinHPeak, candidate);
+
+  document.documentElement.style.setProperty("--board-fill-min-h", `${Math.floor(boardFillMinHPeak)}px`);
+}
+
+function scheduleViewportLayout() {
+  if (viewportLayoutFrame !== null) return;
+  viewportLayoutFrame = requestAnimationFrame(() => {
+    viewportLayoutFrame = null;
+    applyViewportLayout();
+  });
+}
+
+function initViewportLayoutListeners() {
+  if (typeof window === "undefined") return;
+  window.addEventListener("resize", scheduleViewportLayout);
+  window.addEventListener("orientationchange", scheduleViewportLayout);
+  window.visualViewport?.addEventListener("resize", scheduleViewportLayout);
+  VIEWPORT_FILL_MQ?.addEventListener("change", scheduleViewportLayout);
+}
 
 // --- 3. Shuffle Algorithm ---
 function shuffleBoneyard() {
@@ -1461,21 +1598,21 @@ function renderSettingsPanel(container) {
   const body = document.createElement("div");
   body.className = "settings-body";
 
-  const pipField = document.createElement("fieldset");
-  pipField.className = "settings-field";
-  pipField.innerHTML = "<legend>Pip style</legend>";
-  [["black", "Black pips"], ["color", "Color pips"]].forEach(([value, label]) => {
-    const id = `pip-${value}`;
-    pipField.innerHTML += `
+  const displayField = document.createElement("fieldset");
+  displayField.className = "settings-field";
+  displayField.innerHTML = "<legend>Domino Style</legend>";
+  TILE_DISPLAY_OPTIONS.forEach(([value, label]) => {
+    const id = `tile-display-${value}`;
+    displayField.innerHTML += `
       <label class="settings-option">
-        <input type="radio" name="pipStyle" id="${id}" value="${value}" ${gameSettings.pipStyle === value ? "checked" : ""}>
+        <input type="radio" name="tileDisplay" id="${id}" value="${value}" ${gameSettings.tileDisplay === value ? "checked" : ""}>
         ${label}
       </label>`;
   });
-  pipField.querySelectorAll('input[name="pipStyle"]').forEach((input) => {
-    input.onchange = () => requestSettingsChange({ pipStyle: input.value });
+  displayField.querySelectorAll('input[name="tileDisplay"]').forEach((input) => {
+    input.onchange = () => requestSettingsChange({ tileDisplay: input.value });
   });
-  body.appendChild(pipField);
+  body.appendChild(displayField);
 
   const rulesField = document.createElement("fieldset");
   rulesField.className = "settings-field";
@@ -1492,22 +1629,6 @@ function renderSettingsPanel(container) {
     input.onchange = () => requestSettingsChange({ rulesMode: input.value });
   });
   body.appendChild(rulesField);
-
-  const displayField = document.createElement("fieldset");
-  displayField.className = "settings-field";
-  displayField.innerHTML = "<legend>Tile display</legend>";
-  [["pips", "Pips"], ["numerals", "Numerals"], ["auto", "Auto (numerals on small screens)"]].forEach(([value, label]) => {
-    const id = `display-${value}`;
-    displayField.innerHTML += `
-      <label class="settings-option">
-        <input type="radio" name="displayMode" id="${id}" value="${value}" ${gameSettings.displayMode === value ? "checked" : ""}>
-        ${label}
-      </label>`;
-  });
-  displayField.querySelectorAll('input[name="displayMode"]').forEach((input) => {
-    input.onchange = () => requestSettingsChange({ displayMode: input.value });
-  });
-  body.appendChild(displayField);
 
   const targetField = document.createElement("fieldset");
   targetField.className = "settings-field";
@@ -2134,6 +2255,7 @@ function renderGame() {
 
   appDiv.appendChild(mainframe);
   renderSettingsPanel(gameTableSide);
+  scheduleViewportLayout();
 }
 
 // --- 16. TEST & DEBUG HELPERS (Call from console) ---
@@ -2427,6 +2549,7 @@ window.runHouseRulesChecklist = function() {
 // --- 15. Execution Loop ---
 function startNextRound() {
   isGameOver = false;
+  resetBoardFillLayout();
   paperTapeHistory = [];
   liveCalculationText = "No tiles played yet.";
   board.branches = { left: [], right: [], up: [], down: [] };
@@ -2467,4 +2590,5 @@ function initMatch() {
   startNextRound();
 }
 
+initViewportLayoutListeners();
 initMatch();

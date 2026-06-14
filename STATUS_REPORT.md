@@ -2,21 +2,20 @@
 
 ## Latest Session (June 2026 — end of day)
 
-**Status:** 🟢 Playable — House layout + mobile UI polish complete
+**Status:** 🟢 Playable — mobile viewport layout + settings polish complete
 
-**Branch:** `main` · **Commit:** `91f45d7` (pushed)
+**Branch:** `main`
 
 See **SESSION_NOTES.md** for full handoff.
 
-### Shipped today (`91f45d7`)
-- **House branch layout:** overflow fix (3-tile `···` + 2 visible), arms flush with spinner, 2-tile open-end on long branches
-- **Mobile tile scale:** unified `--tile-scale` — board/hand match; no transform layout gap
-- **Compact status bar:** scores `to 150`, Boneyard count, slim turn line; dropped computer tile count (visible in opponent rack)
-- **Hand zones:** bordered player hand + computer opponent rack
-- **Settings:** minimal text link (no gear, no rule above)
-- **Checklist:** `runHouseRulesChecklist()` 9/9
+### Shipped this session
+- **Mobile viewport layout:** board expands on phones/tablets (≤768px) so Settings and audit tape sit at the bottom; uses `visualViewport` + flex column layout
+- **Stable board height:** `--board-fill-min-h` only grows during a round (never shrinks when status lines appear after spinner play); capped at full up/down branch height; resets each new round
+- **Domino Style setting:** merged redundant Pip style + Tile display into one control (Black pips / Color pips / Numerals) with legacy localStorage migration
+- **Settings panel layout:** centered panel, left-aligned section titles and radio columns
 
 ### Prior sessions
+- **`91f45d7`** — House branch layout, unified tile scale, compact status bar, hand zones
 - **`9b0fc7c`** — House L/R arm split, empty-branch slots, long-branch scroll
 - **`dee07d3`** — Hobo rules + scoring (13/13), spinner hub, blocked rounds
 
@@ -60,10 +59,11 @@ Changed `getBranchTip()` to use the explicitly stored `outerEdge` value.
 - ✅ Win condition detection (round + match to target score)
 
 ### UI Features
-- ✅ CSS pip dominoes with settings (pips/color, numerals, House/Hobo)
+- ✅ CSS pip dominoes with Domino Style setting (black pips / color pips / numerals)
 - ✅ Visual board display with spinner hub and Hobo center-line phase
 - ✅ Compact status bar, score toasts, invalid-move feedback
 - ✅ Bordered player hand + opponent rack
+- ✅ Mobile viewport-fill board layout with stable min-height per round
 - ✅ Scoring audit tape (collapsible)
 - ✅ Mobile-responsive layout; unified tile scale; House long-branch scroll
 

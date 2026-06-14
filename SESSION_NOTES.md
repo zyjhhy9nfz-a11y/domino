@@ -1,11 +1,26 @@
 # Session Notes — June 2026
 
-**Branch:** `main` (pushed — `91f45d7`)  
-**Status:** 🟢 Playable — House layout + mobile UI polish complete; compact boneyard next
+**Branch:** `main` (pushed)  
+**Status:** 🟢 Playable — mobile viewport layout + settings polish complete; compact boneyard next
 
 ---
 
-## What we finished (UI + House layout session — 2026-06-14)
+## What we finished (viewport layout + settings session — 2026-06-14)
+
+### Mobile viewport layout ✅ SHIPPED
+- **Board fills phone screen:** on ≤768px, flex column layout pushes Settings + audit tape to bottom of viewport
+- **Stable board height:** `--board-fill-min-h` peak only increases during a round (status/pips lines no longer shrink the board after spinner play)
+- **Sensible cap:** board fill stops at full up/down branch height (`--board-max-fill-h`); resets on new round
+- **Resize-safe:** listens to `visualViewport`, orientation change, and media-query changes
+
+### Settings polish ✅ SHIPPED
+- **Domino Style:** single setting replaces separate Pip style + Tile display (Black pips / Color pips / Numerals)
+- **Legacy migration:** old `pipStyle` + `displayMode` localStorage keys map to `tileDisplay` on load
+- **Panel layout:** centered settings box, left-aligned legends and radio columns
+
+---
+
+## What we finished (UI + House layout session — earlier 2026-06-14)
 
 ### House rules branch layout ✅ SHIPPED (`91f45d7`)
 - **Overflow fix:** 3-tile branches now show `···` + 2 open-end tiles (was invisible 3rd tile bug when `MAX_VISIBLE_PER_BRANCH` was 3)

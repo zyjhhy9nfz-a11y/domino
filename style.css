@@ -15,12 +15,15 @@
   --board-chain-overlap: -1px;
   /* Min hub height: room for 2 tiles + play on up/down arms */
   --board-anchor-min-h: calc(var(--domino-h) * 3 + var(--domino-h) + 12px);
+  /* Max fill height: full up/down arms (2 tiles + slot each) + spinner + break badge */
+  --board-max-fill-h: calc(var(--domino-h) * 6 + 1.25rem + 12px);
   /* Domino tile: capped size (alt fallback: 56×112 documented in main.js) */
   --domino-w: calc(32px * var(--tile-scale));
   --domino-h: calc(64px * var(--tile-scale));
   --domino-ivory: #faf8f5;
   --domino-border: #2a2a2a;
   --domino-divider: #1a1a1a;
+  --settings-radio-col: 1.125rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -51,6 +54,7 @@ body {
 #app {
   max-width: 960px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .game-title {
@@ -217,6 +221,7 @@ button.domino-tile {
   margin-top: 12px;
   text-align: center;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .settings-toggle {
@@ -245,33 +250,51 @@ button.domino-tile {
 
 .settings-body {
   margin-top: 12px;
-  padding: 12px;
+  padding: 12px 16px;
   background: var(--surface);
   border: 1px solid #ccc;
   border-radius: 8px;
+  display: inline-block;
+  max-width: 100%;
+  text-align: left;
 }
 
 .settings-field {
   border: none;
   margin: 0 0 14px;
   padding: 0;
+  min-width: 220px;
+}
+
+.settings-field:last-of-type {
+  margin-bottom: 0;
 }
 
 .settings-field legend {
   font-weight: 800;
   font-size: 0.9rem;
   margin-bottom: 6px;
+  text-align: left;
+  width: 100%;
+  padding: 0;
 }
 
 .settings-option {
-  display: block;
+  display: grid;
+  grid-template-columns: var(--settings-radio-col) 1fr;
+  align-items: start;
+  column-gap: 8px;
   margin: 6px 0;
   font-size: 0.9rem;
   cursor: pointer;
 }
 
 .settings-option input {
-  margin-right: 8px;
+  width: var(--settings-radio-col);
+  height: var(--settings-radio-col);
+  margin: 0.15em 0 0;
+  padding: 0;
+  justify-self: start;
 }
 
 .settings-note {
@@ -546,7 +569,7 @@ button.domino-tile {
 .board-wrapper {
   width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: auto;
   margin: 6px auto 12px;
   padding: 0 0 4px;
 }
@@ -1021,6 +1044,77 @@ button {
 .tape-line--round {
   color: #ff4d4d;
   font-weight: bold;
+}
+
+/* Mobile / tablet portrait: fill viewport so the board grows and settings sit at the bottom */
+@media (max-width: 768px) {
+  html.viewport-fill {
+    height: 100%;
+  }
+
+  html.viewport-fill body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  html.viewport-fill #app {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  html.viewport-fill .mainframe {
+    flex: 1;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
+    min-height: 0;
+  }
+
+  html.viewport-fill .game-table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-width: 100%;
+  }
+
+  html.viewport-fill .game-title,
+  html.viewport-fill .game-status,
+  html.viewport-fill .opponent-rack,
+  html.viewport-fill .hand-container,
+  html.viewport-fill .draw-section,
+  html.viewport-fill .btn-success,
+  html.viewport-fill .btn-primary,
+  html.viewport-fill .game-log,
+  html.viewport-fill .feedback-toast {
+    flex-shrink: 0;
+  }
+
+  html.viewport-fill .board-wrapper {
+    flex: 1 0 auto;
+    min-height: var(--board-fill-min-h, var(--board-anchor-min-h));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 4px auto 6px;
+  }
+
+  html.viewport-fill .board-scaler {
+    margin-inline: auto;
+  }
+
+  html.viewport-fill .settings-panel {
+    margin-top: 4px;
+  }
+
+  html.viewport-fill .audit-panel {
+    flex-shrink: 0;
+    order: unset;
+  }
 }
 
 /* Mobile: iPhone mini (375px) and similar */

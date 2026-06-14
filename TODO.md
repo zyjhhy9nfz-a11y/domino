@@ -52,11 +52,18 @@ These tasks have the highest impact on user experience. Start here!
   - Board hub grid, branch orientation, play slots, settings panel
   - Feature branch: (local — uncommitted)
 
-- [ ] **NEXT UP** | animation-tile-placement
+- [ ] **NEXT UP** | house-branch-layout
+  - Polish House rules hub layout on mobile (left/right play slots flush with spinner)
+  - Verify empty-branch, 1-tile, 2-tile, and long-branch states on iPhone mini (375px)
+  - Helpers: `previewHouseEmptySpinner()`, `previewHouseSingleLeftBranch()`, `previewHouseLongLeftBranch()`, `runHouseRulesChecklist()`
+  - **Blocked by**: (none) — partial fix shipped in `9b0fc7c`; needs real-device QA
+  - **Branch name**: `feat/[initials]-house-branch-layout`
+
+- [ ] **AVAILABLE** | animation-tile-placement
   - Add smooth animation when tiles are played to board
   - Animate branch expansion when tile placed
   - Keep animations fast (<300ms)
-  - **Blocked by**: (none)
+  - **Blocked by**: house-branch-layout (short polish pass first)
   - **Branch name**: `feat/[initials]-animation-tiles`
 
 ### Game Feedback Improvements
@@ -260,8 +267,8 @@ Currently being worked on:
 
 ## Next session
 
-**Start with:** **`animation-tile-placement`**.  
-Branch: `feat/[initials]-animation-tiles`  
+**Start with:** **`house-branch-layout`** — verify/fix left-right placement affordances on mobile, then long-branch scroll.  
+Then: **`animation-tile-placement`**.  
 Full handoff: **SESSION_NOTES.md**
 
 ---
@@ -281,6 +288,7 @@ Tasks finished in the last session(s):
 - ✅ **long-branch-overflow** — Play button when branches get long
 - ✅ **audit-tape-toggle** — Collapsible scoring audit tape
 - ✅ **hobo-scoring** — Center-line Hobo rules, spinner transition, phase scoring, blocked rounds
+- ✅ **house-branch-layout (partial)** — Mobile L/R branch split layout, empty-branch slots at spinner (`9b0fc7c`); polish pass next session
 - ✅ **game-engine** — Core gameplay mechanics
 - ✅ **bug-fix-branch-tips** — Fixed move validation
 - ✅ **basic-ui** — Initial board and hand display
@@ -333,7 +341,7 @@ This repo is **vanilla JavaScript only** (`main.js`, Vite, CSS). Do not add Pyth
 
 ---
 
-**Next session:** **`animation-tile-placement`** — see **SESSION_NOTES.md** for full handoff.
+**Next session:** **`house-branch-layout`** polish, then **`animation-tile-placement`** — see **SESSION_NOTES.md**.
 
 ---
 

@@ -1,20 +1,25 @@
 # Louisiana Dominos Game - Status Report
 
-## Latest Session (June 2026)
+## Latest Session (June 2026 — end of day)
 
-**Status:** 🟢 Playable — Hobo rules complete; House rules unchanged
+**Status:** 🟢 Playable — Hobo rules complete; House mobile branch layout shipped (polish pass next)
 
 See **SESSION_NOTES.md** for full handoff.
 
-### Shipped (latest session)
-- **Hobo rules:** center-line opening, line → spinner transition, 4-arm hub layout
-- **Hobo scoring:** phase-aware in-play scoring verified (13/13 via `runHoboScoringChecklist()`)
-- Blocked-round opener logic, game target score display
-- Board layout: spinner centered, up/down slots flush with half-tile placement blocks
+### Shipped today (`9b0fc7c`)
+- **House rules mobile layout:** split left/right arms (open-end vs spinner-end), long-branch scroll, compact `···` badge
+- **Empty-branch slots:** left/right play affordances pinned to spinner side (matching up/down)
+- **Debug:** `previewHouseEmptySpinner()`, `previewHouseSingleLeftBranch()`, `previewHouseLongLeftBranch()`, `runHouseRulesChecklist()` (6/6)
 
-### Next up (Phase 2)
-- **`animation-tile-placement`**
-- Then: game summary → move history log
+### Prior session (`dee07d3`)
+- **Hobo rules:** center-line opening, line → spinner transition, 4-arm hub layout
+- **Hobo scoring:** phase-aware in-play scoring verified (13/13)
+- Blocked-round opener, game target score, up/down slots flush with spinner
+
+### Next up
+1. **`house-branch-layout`** — verify placement affordances on real phone; tune 1-tile / long-branch states
+2. **`animation-tile-placement`**
+3. game summary → move history log
 
 ---
 
@@ -55,11 +60,11 @@ Changed `getBranchTip()` to use the explicitly stored `outerEdge` value.
 - ✅ Visual board display with spinner hub and Hobo center-line phase
 - ✅ Score toasts, turn banner, invalid-move feedback
 - ✅ Scoring audit tape (collapsible)
-- ✅ Mobile-responsive layout
+- ✅ Mobile-responsive layout; House long-branch scroll on horizontal arms
 
 ### Debug Tools
 - ✅ Debug State / Repair State buttons
-- ✅ `runHoboScoringChecklist()`, `setState()`, board preview helpers
+- ✅ `runHoboScoringChecklist()`, `runHouseRulesChecklist()`, board preview helpers
 
 ---
 
@@ -72,4 +77,4 @@ npm run beta   # LAN testing on port 3000
 
 ---
 
-**Status**: 🟢 READY FOR PHASE 2 POLISH (animations, game summary, move history)
+**Status**: 🟢 READY FOR HOUSE LAYOUT POLISH, THEN PHASE 2 ANIMATIONS

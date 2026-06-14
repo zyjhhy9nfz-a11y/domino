@@ -544,8 +544,8 @@ button.domino-tile {
   grid-area: left;
   align-self: center;
   min-width: 0;
+  justify-content: flex-start;
   overflow-x: auto;
-  justify-content: flex-end;
 }
 
 .board-center {
@@ -559,8 +559,8 @@ button.domino-tile {
   grid-area: right;
   align-self: center;
   min-width: 0;
+  justify-content: flex-end;
   overflow-x: auto;
-  justify-content: flex-start;
 }
 
 .board-arm--down {
@@ -580,6 +580,53 @@ button.domino-tile {
   display: flex;
   align-items: center;
   gap: var(--board-chain-overlap);
+  flex-shrink: 0;
+}
+
+.branch-arm-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: var(--board-chain-overlap);
+}
+
+.branch-arm-row--left {
+  justify-content: space-between;
+}
+
+.branch-arm-row--right {
+  justify-content: space-between;
+}
+
+.branch-arm-row--left.branch-arm-row--spinner-only,
+.branch-arm-row--right.branch-arm-row--spinner-only {
+  width: auto;
+}
+
+.board-arm--left:has(.branch-arm-row--spinner-only) {
+  justify-content: flex-end;
+}
+
+.board-arm--right:has(.branch-arm-row--spinner-only) {
+  justify-content: flex-start;
+}
+
+.branch-open-end {
+  display: flex;
+  align-items: center;
+  gap: var(--board-chain-overlap);
+  flex-shrink: 0;
+}
+
+.branch-arm-row--left .branch-open-end {
+  flex-direction: row-reverse;
+}
+
+.branch-spinner-end {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .branch-chain--up {
@@ -607,6 +654,18 @@ button.domino-tile {
 
 .chain-link--break {
   opacity: 0.85;
+}
+
+.chain-link--break-h {
+  width: auto;
+  min-width: 1.25rem;
+  padding-inline: 2px;
+}
+
+.chain-link--break-v {
+  height: auto;
+  min-height: 1.25rem;
+  padding-block: 2px;
 }
 
 .board-tile {

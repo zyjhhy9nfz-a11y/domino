@@ -195,6 +195,7 @@ function applyChainLinkSize(linkEl, branchName, isDouble) {
 }
 
 const MAX_VISIBLE_PER_BRANCH = 2;
+const MAX_VISIBLE_OPEN_END = 1;
 const MAX_HOBO_LINE_PER_SIDE = MAX_VISIBLE_PER_BRANCH;
 const BRANCH_ARROWS = { up: "▲", down: "▼", left: "◄", right: "►" };
 const HOBO_CENTER = "hobo:center";
@@ -1536,6 +1537,34 @@ function renderSettingsPanel(container) {
 }
 
 // --- 15. Integrated Layout & Interface Pipeline ---
+function getVisibleBranchSegments(branchArray) {
+  if (branchArray.length <= MAX_VISIBLE_PER_BRANCH) {
+    return { hiddenCount: 0, outer: branchArray };
+  }
+  const outer = branchArray.slice(-MAX_VISIBLE_OPEN_END);
+  const hiddenCount = branchArray.length - outer.length;
+  return { hiddenCount, outer };
+}
+
+function scrollHorizontalArmsToOpenEnd(boardWrapper) {
+  requestAnimationFrame(() => {
+    boardWrapper.querySelectorAll(".board-arm--left").forEach((arm) => {
+      arm.scrollLeft = 0;
+    });
+    boardWrapper.querySelectorAll(".board-arm--right").forEach((arm) => {
+      arm.scrollLeft = arm.scrollWidth - arm.clientWidth;
+    });
+  });
+}
+
+function scrollBranchPlaySlotsIntoView(boardWrapper) {
+  requestAnimationFrame(() => {
+    boardWrapper.querySelectorAll(".board-arm--up .chain-link--slot, .board-arm--down .chain-link--slot").forEach((slot) => {
+      slot.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+    });
+  });
+}
+
 function scrollBoardToCenterInWrapper(boardWrapper) {
   requestAnimationFrame(() => {
     const spinnerCenter = boardWrapper.querySelector(".board-center");
@@ -1664,9 +1693,9 @@ function renderGame() {
     const link = document.createElement("div");
     link.className = "chain-link chain-link--break";
     if (isHorizontalBranch(branchName)) {
-      link.style.width = "var(--domino-w)";
+      link.classList.add("chain-link--break-h");
     } else {
-      link.style.height = "var(--domino-w)";
+      link.classList.add("chain-link--break-v");
     }
     link.appendChild(breakBadge);
     return link;
@@ -1805,26 +1834,70 @@ function renderGame() {
   const renderBranchChain = (branchName) => {
     const branchArray = board.branches[branchName];
     const tipValue = getBranchTip(branchName);
+    const { hiddenCount, outer } = getVisibleBranchSegments(branchArray);
+    const showSlot = shouldShowBranchPlaySlot(branchName);
+    const playSlot = showSlot ? createBranchPlaySlot(branchName, tipValue ?? "?") : null;
+
+    const appendTileLink = (parent, move, isLatest) => {
+      const tile = createBoardTile(move, isLatest, branchName);
+      parent.appendChild(wrapChainLink(tile, branchName, move.isDouble));
+    };
+
+    const appendOuterTiles = (parent) => {
+      outer.forEach((move, index) => {
+        appendTileLink(parent, move, index === outer.length - 1);
+      });
+    };
+
+    if (isHorizontalBranch(branchName)) {
+      const row = document.createElement("div");
+      row.className = `branch-arm-row branch-arm-row--${branchName}`;
+
+      const openEnd = document.createElement("div");
+      openEnd.className = "branch-open-end";
+
+      const spinnerEnd = document.createElement("div");
+      spinnerEnd.className = "branch-spinner-end";
+
+      if (hiddenCount > 0) {
+        spinnerEnd.appendChild(createBreakBadge(branchName, hiddenCount));
+        appendOuterTiles(openEnd);
+        if (playSlot) openEnd.appendChild(playSlot);
+      } else if (branchArray.length >= 2) {
+        appendTileLink(spinnerEnd, branchArray[0], false);
+        appendTileLink(openEnd, branchArray[1], true);
+        if (playSlot) openEnd.appendChild(playSlot);
+      } else if (branchArray.length === 1) {
+        appendTileLink(spinnerEnd, branchArray[0], true);
+        if (playSlot) openEnd.appendChild(playSlot);
+      } else if (playSlot) {
+        spinnerEnd.appendChild(playSlot);
+      }
+
+      if (branchName === "left") {
+        if (openEnd.childNodes.length > 0) row.appendChild(openEnd);
+        if (spinnerEnd.childNodes.length > 0) row.appendChild(spinnerEnd);
+      } else {
+        if (spinnerEnd.childNodes.length > 0) row.appendChild(spinnerEnd);
+        if (openEnd.childNodes.length > 0) row.appendChild(openEnd);
+      }
+      if (openEnd.childNodes.length === 0) {
+        row.classList.add("branch-arm-row--spinner-only");
+      }
+      return row;
+    }
+
     const chain = document.createElement("div");
     chain.className = `branch-chain branch-chain--${branchName}`;
 
-    const hasHiddenTiles = branchArray.length > MAX_VISIBLE_PER_BRANCH;
-    const maxVisible = Math.min(branchArray.length, MAX_VISIBLE_PER_BRANCH);
-    const startIndex = branchArray.length - maxVisible;
-    const visibleMoves = branchArray.slice(startIndex);
-
-    if (hasHiddenTiles) {
-      chain.appendChild(createBreakBadge(branchName, branchArray.length - maxVisible));
+    if (hiddenCount > 0) {
+      chain.appendChild(createBreakBadge(branchName, hiddenCount));
     }
 
-    visibleMoves.forEach((move, index) => {
-      const isLatest = startIndex + index === branchArray.length - 1;
-      const tile = createBoardTile(move, isLatest, branchName);
-      chain.appendChild(wrapChainLink(tile, branchName, move.isDouble));
-    });
+    appendOuterTiles(chain);
 
-    if (shouldShowBranchPlaySlot(branchName)) {
-      chain.appendChild(createBranchPlaySlot(branchName, tipValue ?? "?"));
+    if (playSlot) {
+      chain.appendChild(playSlot);
     }
 
     return chain;
@@ -1877,6 +1950,8 @@ function renderGame() {
   boardWrapper.appendChild(boardScaler);
   gameTableSide.appendChild(boardWrapper);
   scrollBoardToCenterInWrapper(boardWrapper);
+  scrollHorizontalArmsToOpenEnd(boardWrapper);
+  scrollBranchPlaySlotsIntoView(boardWrapper);
 
   const playerNeedsToDraw = isPlayerTurn && !hasAnyValidMoves(playerHand) && boneyard.length > 0 && !isGameOver;
   if (playerNeedsToDraw) {
@@ -2126,6 +2201,63 @@ window.previewHoboSpinnerFromLine = function(side = "right") {
   setTimeout(() => setState(), 50);
 };
 
+window.previewHouseEmptySpinner = function(val = 6) {
+  gameSettings.rulesMode = "house";
+  isGameOver = false;
+  isPlayerTurn = true;
+  board.spinner = [val, val];
+  board.branches = { left: [], right: [], up: [], down: [] };
+  renderGame();
+};
+
+window.previewHouseSingleLeftBranch = function() {
+  gameSettings.rulesMode = "house";
+  isGameOver = false;
+  isPlayerTurn = true;
+  board.spinner = [6, 6];
+  board.branches = {
+    left: [{ tile: [6, 5], outerEdge: 5, isDouble: false }],
+    right: [{ tile: [6, 4], outerEdge: 4, isDouble: false }],
+    up: [],
+    down: [],
+  };
+  playerHand = [[5, 3], [0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]];
+  renderGame();
+};
+
+window.previewHouseLongLeftBranch = function() {
+  gameSettings.rulesMode = "house";
+  hoboCenterLineActive = true;
+  isGameOver = false;
+  isPlayerTurn = true;
+  board.spinner = [6, 6];
+  board.branches = {
+    left: [
+      { tile: [6, 5], outerEdge: 5, isDouble: false },
+      { tile: [5, 4], outerEdge: 4, isDouble: false },
+      { tile: [4, 3], outerEdge: 3, isDouble: false },
+      { tile: [3, 2], outerEdge: 2, isDouble: false },
+    ],
+    right: [],
+    up: [],
+    down: [],
+  };
+  playerHand = [[2, 1], [0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5]];
+  renderGame();
+  setTimeout(() => {
+    const arm = document.querySelector(".board-arm--left");
+    const slot = arm?.querySelector(".chain-link--slot");
+    const outerTile = arm?.querySelector(".board-tile");
+    const br = arm?.querySelector(".branch-break");
+    console.log("Long left branch layout:", {
+      hasBreak: !!br,
+      hasOuterTile: !!outerTile,
+      slotVisible: !!slot && slot.getBoundingClientRect().width > 0,
+      armScrollLeft: arm?.scrollLeft,
+    });
+  }, 100);
+};
+
 window.runHoboScoringChecklist = function() {
   const savedRules = gameSettings.rulesMode;
   gameSettings.rulesMode = "hobo";
@@ -2178,6 +2310,37 @@ window.runHoboScoringChecklist = function() {
     roundSweepPips(5), 5);
   check("6c. Round sweep 0 → 0",
     roundSweepPips(0), 0);
+
+  gameSettings.rulesMode = savedRules;
+  board.spinner = null;
+  board.branches = { left: [], right: [], up: [], down: [] };
+
+  const passed = results.filter((r) => r.pass).length;
+  console.log(`\n=== ${passed}/${results.length} checks passed ===\n`);
+  return results;
+};
+
+window.runHouseRulesChecklist = function() {
+  const savedRules = gameSettings.rulesMode;
+  gameSettings.rulesMode = "house";
+  hoboCenterLineActive = true;
+  board.spinner = [6, 6];
+  board.branches = { left: [], right: [], up: [], down: [] };
+  const results = [];
+  const check = (name, pass) => {
+    results.push({ name, pass });
+    console.log(`${pass ? "✅" : "❌"} ${name}`);
+    return pass;
+  };
+
+  console.log("\n=== HOUSE RULES CHECKLIST ===\n");
+
+  check("Uses hub board (not Hobo line)", !shouldRenderHoboLineBoard());
+  check("All four branch slots shown", BRANCH_NAMES.every((b) => shouldShowBranchPlaySlot(b)));
+  check("Hobo line targets blocked", !isValidMove([3, 2], HOBO_CENTER));
+  check("House branch move valid", isValidMove([6, 5], "left"));
+  check("House uses House in-play scoring path", evaluateBoardScore(false, "TEST") === evaluateBoardScoreHouse(false, "TEST"));
+  check("House sweep rounds down 7 → 5", roundSweepPips(7) === 5);
 
   gameSettings.rulesMode = savedRules;
   board.spinner = null;

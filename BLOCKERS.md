@@ -8,7 +8,7 @@ Issues discovered during development. Add here when you find bugs or blockers!
 
 ### None at this time ✅
 
-The game is stable and playable on desktop and mobile (June 2026 session).
+The game is stable and playable on desktop and mobile.
 
 ---
 
@@ -126,7 +126,7 @@ If a task is blocking your work:
 
 All game code must stay in **JavaScript** (`.js` files). This project does not use Python. A corrupted `main.js` once contained Python syntax and broke the entire game. Before committing changes to `main.js`, confirm:
 
-- File is ~850 lines (not ~60)
+- File is ~1500+ lines (not ~60)
 - No `def`, `import sys`, or other non-JS syntax
 - `npm run dev` loads the game without console errors
 

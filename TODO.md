@@ -1,6 +1,6 @@
 # Louisiana Dominoes Game - Task Tracker
 
-**Status**: 🟢 Core game complete, mobile-ready, LAN beta hosting  
+**Status**: 🟢 Core game complete, visual polish + settings done, mobile-ready, LAN beta hosting  
 **Last Updated**: 2026-06-14
 
 ---
@@ -47,15 +47,12 @@ These tasks have the highest impact on user experience. Start here!
   - Board scales and centers on small screens
   - Feature branch: (integrated to main)
 
-- [ ] **AVAILABLE** | tile-visual-polish
-  - Improve tile styling with pip details
-  - Add colors and 3D effects for tiles on board
-  - Better contrast for visibility
-  - Test on: multiple screen sizes, different lighting
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-tile-visual-polish`
+- [x] **DONE** (Session June 2026) | tile-visual-polish
+  - CSS pip dominoes on hand, board, spinner; ivory backs; color pip option
+  - Board hub grid, branch orientation, play slots, settings panel
+  - Feature branch: (local — uncommitted)
 
-- [ ] **AVAILABLE** | animation-tile-placement
+- [ ] **NEXT UP** | animation-tile-placement
   - Add smooth animation when tiles are played to board
   - Animate branch expansion when tile placed
   - Keep animations fast (<300ms)
@@ -133,20 +130,15 @@ These add game variety and increase replayability.
 
 ### Scoring Variants
 
-- [ ] **AVAILABLE** | hobo-scoring
-  - Implement hobo scoring variant as a selectable mode (Louisiana vs Hobo)
-  - **End-of-round sweep (already implemented):** opponent's remaining pips are rounded **down** to the nearest multiple of 5 (`Math.floor(pips / 5) * 5`). Example: 4 pips → 0 sweep points. This is correct for Hobo — preserve `roundDownToFive` in `checkWinCondition()` when wiring the variant.
-  - In-play scoring rules for Hobo still TBD vs Louisiana (board multiples-of-5 today)
-  - Add scoring mode selector and update scoring display for variant
-  - Test calculations match expected rules
-  - **Blocked by**: (Phase 2 completion)
-  - **Branch name**: `feat/[initials]-hobo-scoring`
+- [x] **DONE** (June 2026) | hobo-scoring
+  - Hobo center-line opening, spinner transition, phase-aware in-play scoring
+  - Blocked-round opener, game target score, board layout polish
+  - Verified via `runHoboScoringChecklist()` (13/13) — see SESSION_NOTES.md
+  - Feature branch: (integrated to main — local commit)
 
 - [ ] **AVAILABLE** | house-rules
-  - Options for double-six-only starting rule
-  - Custom pip values (if desired)
-  - House rules selector in UI
-  - Document each rule option
+  - Highest-double start and Louisiana scoring **implemented** via settings toggle
+  - Remaining: double-six-only option, custom pip values, document each rule
   - **Blocked by**: (Phase 2 completion)
   - **Branch name**: `feat/[initials]-house-rules`
 
@@ -262,7 +254,15 @@ Check **BLOCKERS.md** for blockers and what's preventing progress.
 
 Currently being worked on:
 
-- **None** (All team members available for new tasks)
+- *(none)*
+
+---
+
+## Next session
+
+**Start with:** **`animation-tile-placement`**.  
+Branch: `feat/[initials]-animation-tiles`  
+Full handoff: **SESSION_NOTES.md**
 
 ---
 
@@ -270,14 +270,17 @@ Currently being worked on:
 
 Tasks finished in the last session(s):
 
+- ✅ **tile-visual-polish** — Pip dominoes, settings panel, board hub layout, opponent peek
 - ✅ **score-announcement** — Pop-up toasts for scoring and no-score plays
 - ✅ **invalid-move-feedback** — Rejection reasons with visible invalid branch slots
+- ✅ **tile-orientation-fix** — Player tiles stored/displayed as inner·outer toward chain
+- ✅ **sweep-scoring-fix** — End-of-round pips round down to nearest 5 (Hobo reference rule)
 - ✅ **mobile-responsive** — Mobile layout, touch targets, centered board
 - ✅ **turn-indicator** — Turn banner (player / computer / game over)
 - ✅ **boneyard-display** — Boneyard count in UI
 - ✅ **long-branch-overflow** — Play button when branches get long
 - ✅ **audit-tape-toggle** — Collapsible scoring audit tape
-- ✅ **lan-beta-hosting** — `npm run beta`, network URLs on startup
+- ✅ **hobo-scoring** — Center-line Hobo rules, spinner transition, phase scoring, blocked rounds
 - ✅ **game-engine** — Core gameplay mechanics
 - ✅ **bug-fix-branch-tips** — Fixed move validation
 - ✅ **basic-ui** — Initial board and hand display
@@ -323,14 +326,14 @@ This repo is **vanilla JavaScript only** (`main.js`, Vite, CSS). Do not add Pyth
 | Metric | Count |
 |--------|-------|
 | Total Tasks | 31 |
-| Completed | 8 |
+| Completed | 10 |
 | In Progress | 0 |
-| Available | 23 |
-| Phase 2 Priority | 4 remaining |
+| Available | 21 |
+| Phase 2 Priority | 3 remaining |
 
 ---
 
-**Next session:** See **SESSION_NOTES.md**. Start with `tile-visual-polish` or `animation-tile-placement`.
+**Next session:** **`animation-tile-placement`** — see **SESSION_NOTES.md** for full handoff.
 
 ---
 

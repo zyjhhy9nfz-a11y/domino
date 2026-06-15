@@ -626,6 +626,18 @@ button.domino-tile {
   overflow-x: auto;
 }
 
+/* Hide scrollbars on horizontal arms; scroll still works via scrollHorizontalArmsToOpenEnd */
+.board-arm--left,
+.board-arm--right {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.board-arm--left::-webkit-scrollbar,
+.board-arm--right::-webkit-scrollbar {
+  display: none;
+}
+
 .board-arm--down {
   grid-area: down;
   align-self: start;

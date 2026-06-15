@@ -14,12 +14,12 @@ The game is stable and playable on desktop and mobile.
 
 ## Follow-ups (not blockers)
 
-### House branch layout — mobile polish 🔄 NEXT SESSION
+### House branch layout — mobile polish 🔄 LOW PRIORITY
 
 - **Context:** Left/right placement affordances on spinner-only boards looked spaced away from the spinner (top/bottom were correct). Fix landed in `9b0fc7c` (`spinnerEnd` slot + `branch-arm-row--spinner-only` arm alignment).
 - **Next:** Verify on real phone (375px); confirm 1-tile, 2-tile, and 4+ tile left-branch states. Console helpers in SESSION_NOTES.md.
 - **Severity:** Low (cosmetic / UX)
-- **Status:** IN PROGRESS — polish pass scheduled next session
+- **Status:** OPEN — optional verify pass; not blocking Phase 2
 
 ---
 

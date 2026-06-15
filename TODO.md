@@ -1,7 +1,7 @@
 # Louisiana Dominoes Game - Task Tracker
 
-**Status**: 🟢 House layout + mobile UI polish done; compact boneyard next  
-**Last Updated**: 2026-06-14 (pushed `91f45d7`)
+**Status**: 🟢 Compact boneyard done; animation-tile-placement next  
+**Last Updated**: 2026-06-15
 
 ---
 
@@ -58,17 +58,16 @@ These tasks have the highest impact on user experience. Start here!
   - Helpers: `previewHouseEmptySpinner()`, `previewHouseSingleLeftBranch()`, `previewHouseTwoTileLeftBranch()`, `previewHouseThreeTileLeftBranch()`, `previewHouseLongLeftBranch()`, `runHouseRulesChecklist()` (9/9)
   - Feature branch: (integrated to main)
 
-- [ ] **NEXT UP** | compact-boneyard-display
-  - Shrink draw/boneyard section on mobile — less vertical space between board and hand
-  - Keep Auto-Draw + manual pick; consider inline header, smaller tiles, or collapsible panel
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-compact-boneyard`
+- [x] **DONE** (Cursor, 2026-06-15) | compact-boneyard-display
+  - One-line caption + horizontal scroll pool; blue auto pseudo-tile (vertical “auto⚡”) at left
+  - Smaller boneyard tiles via `--boneyard-scale`; single-tap manual draw (no confirm step)
+  - Feature branch: (integrated to main)
 
 - [ ] **AVAILABLE** | animation-tile-placement
   - Add smooth animation when tiles are played to board
   - Animate branch expansion when tile placed
   - Keep animations fast (<300ms)
-  - **Blocked by**: compact-boneyard-display (optional — can run in parallel)
+  - **Blocked by**: (none)
   - **Branch name**: `feat/[initials]-animation-tiles`
 
 ### Game Feedback Improvements
@@ -272,8 +271,7 @@ Currently being worked on:
 
 ## Next session
 
-**Start with:** **`compact-boneyard-display`** — shrink draw section on mobile.  
-Then: **`animation-tile-placement`**.
+**Start with:** **`animation-tile-placement`** — smooth tile play animations.
 
 ---
 
@@ -281,6 +279,7 @@ Then: **`animation-tile-placement`**.
 
 Tasks finished in the last session(s):
 
+- ✅ **compact-boneyard-display** — Smaller scrollable boneyard pool, tighter mobile draw section
 - ✅ **house-branch-layout** — Mobile branch overflow fix, unified tile scale, compact status bar, hand/opponent racks
 - ✅ **tile-visual-polish** — Pip dominoes, settings panel, board hub layout, opponent peek
 - ✅ **score-announcement** — Pop-up toasts for scoring and no-score plays
@@ -338,16 +337,16 @@ This repo is **vanilla JavaScript only** (`main.js`, Vite, CSS). Do not add Pyth
 | Metric | Count |
 |--------|-------|
 | Total Tasks | 31 |
-| Completed | 10 |
+| Completed | 11 |
 | In Progress | 0 |
-| Available | 21 |
-| Phase 2 Priority | 3 remaining |
+| Available | 20 |
+| Phase 2 Priority | 2 remaining |
 
 ---
 
-**Next session:** **`compact-boneyard-display`**, then **`animation-tile-placement`**.
+**Next session:** **`animation-tile-placement`**, then **`game-summary-screen`**.
 
 ---
 
-*Last updated: 2026-06-14*  
+*Last updated: 2026-06-15*  
 *Update this file every time you claim, start, or complete a task*

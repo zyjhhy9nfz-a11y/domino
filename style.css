@@ -853,68 +853,84 @@ button.domino-tile {
 
 /* Draw section */
 .draw-section {
+  --boneyard-scale: 0.88;
   background: #fff0f0;
   border: 1px solid #ffcccc;
-  padding: 10px;
+  padding: 8px;
   border-radius: 8px;
-  margin-top: 6px;
+  margin-top: 4px;
   text-align: left;
 }
 
-.draw-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.draw-section h3 {
-  color: var(--danger);
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.btn-auto-draw {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  font-size: 0.88rem;
-}
-
-.draw-manual-hint {
-  margin: 4px 0 0;
+.draw-caption {
+  margin: 0 0 4px;
   font-size: 0.82rem;
-  font-weight: 700;
-  color: #666;
+  font-weight: 800;
+  color: var(--danger);
+  line-height: 1.2;
 }
 
 .boneyard-pool {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-  justify-content: flex-start;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-top: 0;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.boneyard-pool .boneyard-tile.domino-tile,
+.boneyard-pool .boneyard-auto-tile {
+  width: calc(var(--domino-w) * var(--boneyard-scale));
+  height: calc(var(--domino-h) * var(--boneyard-scale));
+  flex-shrink: 0;
+}
+
+.boneyard-auto-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.5px solid #004499;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #4d9bff 0%, var(--accent) 50%, #0056c7 100%);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.boneyard-auto-tile__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  line-height: 1;
+  padding: 2px 0;
+}
+
+.boneyard-auto-tile__char {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: lowercase;
+  line-height: 0.92;
+}
+
+.boneyard-auto-tile__bolt {
+  font-size: 0.48rem;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.boneyard-auto-tile:active {
+  transform: scale(0.97);
 }
 
 .boneyard-tile {
   position: relative;
-}
-
-.boneyard-tile--selected {
-  outline: 2px solid var(--danger);
-  outline-offset: 2px;
-}
-
-.boneyard-tile__confirm {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--danger);
-  pointer-events: none;
 }
 
 /* Hand — visually separated from the board */
@@ -1184,13 +1200,27 @@ button {
   }
 
   .draw-section {
-    margin-top: 4px;
-    margin-bottom: 2px;
+    --boneyard-scale: 0.72;
+    margin-top: 2px;
+    margin-bottom: 0;
+    padding: 5px 6px;
   }
 
-  .btn-auto-draw {
-    padding: 8px 10px;
-    font-size: 0.85rem;
+  .draw-caption {
+    font-size: 0.76rem;
+    margin-bottom: 3px;
+  }
+
+  .boneyard-auto-tile__char {
+    font-size: 0.5rem;
+  }
+
+  .boneyard-auto-tile__bolt {
+    font-size: 0.42rem;
+  }
+
+  .boneyard-pool {
+    gap: 3px;
   }
 
   .audit-panel {

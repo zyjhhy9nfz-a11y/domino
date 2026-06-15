@@ -384,7 +384,6 @@ let board = {
 };
 let gameLog = "";
 let selectedTileIndex = null;
-let selectedBoneyardIndex = null;
 let feedbackToast = null;
 let feedbackToastTimer = null;
 let moveFeedbackIsError = false;
@@ -1363,22 +1362,16 @@ function playToTarget(target) {
 function handlePlayerManualDraw(index) {
   if (!isPlayerTurn || hasAnyValidMoves(playerHand) || boneyard.length === 0 || isGameOver) return;
 
-  if (selectedBoneyardIndex === index) {
-    const drawnTile = boneyard.splice(index, 1)[0];
-    playerHand.push(drawnTile);
-    selectedBoneyardIndex = null;
+  const drawnTile = boneyard.splice(index, 1)[0];
+  playerHand.push(drawnTile);
 
-    if (hasAnyValidMoves([drawnTile])) {
-      selectedTileIndex = playerHand.length - 1; 
-      gameLog = `You pulled [${drawnTile[0]}·${drawnTile[1]}]! It matches! Choose where to play.`;
-    } else {
-      gameLog = `You pulled [${drawnTile[0]}·${drawnTile[1]}], but it doesn't match. Draw another or use Auto-Draw!`;
-    }
-    renderGame();
+  if (hasAnyValidMoves([drawnTile])) {
+    selectedTileIndex = playerHand.length - 1;
+    gameLog = `You pulled [${drawnTile[0]}·${drawnTile[1]}]! It matches! Choose where to play.`;
   } else {
-    selectedBoneyardIndex = index;
-    renderGame();
+    gameLog = `You pulled [${drawnTile[0]}·${drawnTile[1]}], but it doesn't match. Draw another or tap auto.`;
   }
+  renderGame();
 }
 
 // --- 12. Player Auto-draw Action ---
@@ -2097,45 +2090,47 @@ function renderGame() {
     const drawSection = document.createElement("div");
     drawSection.className = "draw-section";
 
-    const drawHeader = document.createElement("div");
-    drawHeader.className = "draw-header";
-
-    const boneLabel = document.createElement("h3");
-    boneLabel.textContent = `Boneyard (${boneyard.length})`;
-    drawHeader.appendChild(boneLabel);
-
-    const autoBtn = document.createElement("button");
-    autoBtn.className = "btn btn-primary btn-auto-draw";
-    autoBtn.textContent = "⚡ Auto-Draw";
-    autoBtn.onclick = handlePlayerAutoDraw;
-    drawHeader.appendChild(autoBtn);
-    drawSection.appendChild(drawHeader);
-
-    const manualLabel = document.createElement("p");
-    manualLabel.className = "draw-manual-hint";
-    manualLabel.textContent = "Or pick manually:";
-    drawSection.appendChild(manualLabel);
+    const drawCaption = document.createElement("p");
+    drawCaption.className = "draw-caption";
+    drawCaption.textContent = `Boneyard (${boneyard.length}) - Auto-draw or tap a tile`;
+    drawSection.appendChild(drawCaption);
 
     const manualPoolContainer = document.createElement("div");
     manualPoolContainer.className = "boneyard-pool";
 
+    const autoBtn = document.createElement("button");
+    autoBtn.type = "button";
+    autoBtn.className = "boneyard-auto-tile";
+    autoBtn.title = "Auto-draw until you get a playable tile";
+    autoBtn.setAttribute("aria-label", "Auto-draw until you get a playable tile");
+    autoBtn.onclick = handlePlayerAutoDraw;
+
+    const autoLabel = document.createElement("span");
+    autoLabel.className = "boneyard-auto-tile__label";
+    autoLabel.setAttribute("aria-hidden", "true");
+    for (const char of "auto") {
+      const charEl = document.createElement("span");
+      charEl.className = "boneyard-auto-tile__char";
+      charEl.textContent = char;
+      autoLabel.appendChild(charEl);
+    }
+    const autoBolt = document.createElement("span");
+    autoBolt.className = "boneyard-auto-tile__bolt";
+    autoBolt.textContent = "⚡";
+    autoBolt.setAttribute("aria-hidden", "true");
+    autoLabel.appendChild(autoBolt);
+    autoBtn.appendChild(autoLabel);
+    manualPoolContainer.appendChild(autoBtn);
+
     boneyard.forEach((tile, bIndex) => {
-      const isTargeted = (bIndex === selectedBoneyardIndex);
       const boneBtn = createDominoTile(0, 0, {
         tag: "button",
         faceDown: true,
-        className: isTargeted ? "boneyard-tile boneyard-tile--selected" : "boneyard-tile",
-        title: isTargeted ? "Confirm draw?" : `Boneyard tile ${bIndex + 1}`,
-        ariaLabel: isTargeted ? "Confirm boneyard draw" : `Face-down boneyard tile ${bIndex + 1}`,
+        className: "boneyard-tile",
+        title: `Draw boneyard tile ${bIndex + 1}`,
+        ariaLabel: `Draw face-down boneyard tile ${bIndex + 1}`,
         onClick: () => handlePlayerManualDraw(bIndex),
       });
-      if (isTargeted) {
-        const confirm = document.createElement("span");
-        confirm.className = "boneyard-tile__confirm";
-        confirm.textContent = "?";
-        confirm.setAttribute("aria-hidden", "true");
-        boneBtn.appendChild(confirm);
-      }
       manualPoolContainer.appendChild(boneBtn);
     });
     drawSection.appendChild(manualPoolContainer);
@@ -2557,7 +2552,6 @@ function startNextRound() {
   hoboLine = [];
   hoboCenterLineActive = isHoboRules();
   selectedTileIndex = null;
-  selectedBoneyardIndex = null;
   feedbackToast = null;
   moveFeedbackIsError = false;
   if (feedbackToastTimer) {

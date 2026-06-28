@@ -225,22 +225,22 @@ button.domino-tile {
 }
 
 .settings-toggle {
-  width: auto;
+  width: 100%;
   min-height: auto;
-  padding: 6px 0;
+  padding: 0 0 8px;
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #fff;
+  color: var(--text);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
   text-align: center;
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   .settings-toggle {
-    color: var(--text);
+    color: #fff;
   }
 }
 
@@ -248,14 +248,30 @@ button.domino-tile {
   opacity: 0.8;
 }
 
-.settings-body {
+.settings-card {
   margin-top: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 14px;
   background: var(--surface);
   border: 1px solid #ccc;
   border-radius: 8px;
-  display: inline-block;
-  max-width: 100%;
+  width: 100%;
+  max-width: 300px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-card {
+    border-color: #555;
+  }
+}
+
+.settings-body {
+  margin: 0;
+  padding: 0;
+  display: block;
+  width: 100%;
   text-align: left;
 }
 
@@ -263,7 +279,7 @@ button.domino-tile {
   border: none;
   margin: 0 0 14px;
   padding: 0;
-  min-width: 220px;
+  width: 100%;
 }
 
 .settings-field:last-of-type {
@@ -301,7 +317,15 @@ button.domino-tile {
   font-size: 0.82rem;
   color: #666;
   font-style: italic;
-  margin: 0;
+  margin: 4px 0 0;
+  min-height: 2.75em;
+  line-height: 1.35;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-note {
+    color: #aaa;
+  }
 }
 
 /* Layout */
@@ -427,6 +451,13 @@ button.domino-tile {
   opacity: 0.65;
 }
 
+.game-status__you--winner strong,
+.game-status__cpu--winner strong {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
 .turn-line {
   margin-top: 6px;
   font-size: 0.88rem;
@@ -528,6 +559,24 @@ button.domino-tile {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
 
+.feedback-toast--corner {
+  top: 6px;
+  right: 6px;
+  left: auto;
+  transform: none;
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  animation: feedback-corner-pop 250ms ease-out;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.feedback-toast--corner.feedback-toast--no-score {
+  font-size: 0.82rem;
+  opacity: 0.92;
+}
+
 .feedback-toast--score-player {
   background: var(--success);
   color: #fff;
@@ -565,8 +614,26 @@ button.domino-tile {
   }
 }
 
+@keyframes feedback-corner-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-toast {
+    animation: none;
+  }
+}
+
 /* Board — spinner pinned at hub center; branches grow outward from center column */
 .board-wrapper {
+  position: relative;
   width: 100%;
   overflow-x: auto;
   overflow-y: auto;
@@ -1118,7 +1185,7 @@ button {
   html.viewport-fill .btn-success,
   html.viewport-fill .btn-primary,
   html.viewport-fill .game-log,
-  html.viewport-fill .feedback-toast {
+  html.viewport-fill .feedback-toast--error {
     flex-shrink: 0;
   }
 

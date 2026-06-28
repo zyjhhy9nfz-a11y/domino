@@ -1,28 +1,64 @@
 # Louisiana Dominos Game - Status Report
 
-## Latest Session (June 2026 — end of day)
+## Latest Session (June 28, 2026)
 
-**Status:** 🟢 Playable — mobile viewport layout + settings polish complete
+**Status:** 🟢 Playable — game-end UX complete; animation polish next
 
-**Branch:** `main` · **Commit:** `be90233` (pushed)
+**Branch:** `main` · **Commit:** (this session — game-end UX)
 
 See **SESSION_NOTES.md** for full handoff.
 
 ### Shipped this session
-- **Mobile viewport layout:** board expands on phones/tablets (≤768px) so Settings and audit tape sit at the bottom; uses `visualViewport` + flex column layout
-- **Stable board height:** `--board-fill-min-h` only grows during a round (never shrinks when status lines appear after spinner play); capped at full up/down branch height; resets each new round
-- **Domino Style setting:** merged redundant Pip style + Tile display into one control (Black pips / Color pips / Numerals) with legacy localStorage migration
-- **Settings panel layout:** centered panel, left-aligned section titles and radio columns
+- **Game-end UX (`game-summary-screen`):** Inline status bar at round/match end — winner headline, score underline, round points breakdown, last-play recap; Play Again below hand; board stays visible (no modal)
+- **Hobo scoring fix:** Line-end double on branch tip now scores `lineEndPip + spinnerPips` (e.g. 6·4 → 4·4 = 14, not 8); checklist 16/16
+- **Toast polish:** Score/no-score toasts upper-right of board; no double-render glitch at game over
+- **Settings:** Stable card width; rules note for both House and Hobo
 
-### Prior sessions
-- **`91f45d7`** — House branch layout, unified tile scale, compact status bar, hand zones
-- **`9b0fc7c`** — House L/R arm split, empty-branch slots, long-branch scroll
-- **`dee07d3`** — Hobo rules + scoring (13/13), spinner hub, blocked rounds
+### Phase 2 progress
+
+| Task | Status |
+|------|--------|
+| compact-boneyard-display | ✅ Done |
+| game-summary-screen | ✅ Done |
+| animation-tile-placement | ⏭ Next |
+| move-history-log | Available |
 
 ### Next up
-1. **`compact-boneyard-display`** — shrink draw section on mobile
-2. **`animation-tile-placement`**
-3. game-summary-screen → move-history-log
+1. **`animation-tile-placement`** — land pulse on new tile (<300ms MVP)
+2. **`move-history-log`** — scrollable move list with scores
+
+### Verify before next session
+```bash
+npm run dev
+npm run build
+```
+```js
+runHoboScoringChecklist()  // 16/16
+runHouseRulesChecklist()   // 9/9
+```
+
+---
+
+## Prior Session (June 2026 — compact boneyard)
+
+**Commit:** `4d4f66a` — Compact boneyard UI with vertical auto tile and single-tap draw
+
+### Shipped
+- One-line boneyard caption, horizontal scroll pool, blue auto-draw pseudo-tile
+- Smaller tiles via `--boneyard-scale`; single-tap manual draw
+
+---
+
+## Prior Session (June 2026 — viewport layout)
+
+**Commit:** `be90233` (pushed)
+
+### Shipped
+- Mobile viewport layout; stable board height; Domino Style setting; settings panel polish
+
+### Earlier milestones
+- **`91f45d7`** — House branch layout, unified tile scale, compact status bar
+- **`dee07d3`** — Hobo rules + scoring, spinner hub, blocked rounds
 
 ---
 
@@ -61,11 +97,13 @@ Changed `getBranchTip()` to use the explicitly stored `outerEdge` value.
 ### UI Features
 - ✅ CSS pip dominoes with Domino Style setting (black pips / color pips / numerals)
 - ✅ Visual board display with spinner hub and Hobo center-line phase
-- ✅ Compact status bar, score toasts, invalid-move feedback
+- ✅ Compact status bar with inline game-end summary (winner, round points, last play)
+- ✅ Score toasts (corner placement), invalid-move feedback
 - ✅ Bordered player hand + opponent rack
 - ✅ Mobile viewport-fill board layout with stable min-height per round
 - ✅ Scoring audit tape (collapsible)
 - ✅ Mobile-responsive layout; unified tile scale; House long-branch scroll
+- ✅ Compact boneyard display with auto-draw tile
 
 ### Debug Tools
 - ✅ Debug State / Repair State buttons
@@ -77,9 +115,10 @@ Changed `getBranchTip()` to use the explicitly stored `outerEdge` value.
 
 ```bash
 npm run dev    # http://localhost:5174
+npm run build  # verify production build
 npm run beta   # LAN testing on port 3000
 ```
 
 ---
 
-**Status**: 🟢 READY FOR COMPACT BONEYARD, THEN ANIMATIONS
+**Status**: 🟢 READY FOR ANIMATIONS, THEN MOVE HISTORY

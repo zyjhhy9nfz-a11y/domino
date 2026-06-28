@@ -1,7 +1,7 @@
 # Louisiana Dominoes Game - Task Tracker
 
-**Status**: 🟢 Compact boneyard done; animation-tile-placement next  
-**Last Updated**: 2026-06-15
+**Status**: 🟢 Game-end UX shipped; animation-tile-placement next  
+**Last Updated**: 2026-06-28
 
 ---
 
@@ -92,13 +92,12 @@ These tasks have the highest impact on user experience. Start here!
 
 ### Game Flow Improvements
 
-- [ ] **AVAILABLE** | game-summary-screen
-  - Game over screen with final scores
-  - Winner announcement with celebration
-  - "Play Again" button to restart
-  - Show game stats (turns played, max score, etc.)
-  - **Blocked by**: (none)
-  - **Branch name**: `feat/[initials]-game-summary`
+- [x] **DONE** (Cursor, 2026-06-28) | game-summary-screen
+  - Inline status bar at round/match end (board stays visible — no modal overlay)
+  - Winner headline, score underline, round points breakdown, last-play line
+  - Next Round / Play Again button below hand
+  - Helpers: `getGameSummaryModel()`, `formatRoundPointsLine()`, `formatLastPlayLine()`, `rememberLastPlay()`
+  - Feature branch: (local — uncommitted)
 
 - [ ] **AVAILABLE** | move-history-log
   - Display history of moves made in current game
@@ -271,7 +270,7 @@ Currently being worked on:
 
 ## Next session
 
-**Start with:** **`animation-tile-placement`** — smooth tile play animations.
+**Start with:** **`animation-tile-placement`** — smooth tile play animations (<300ms land pulse MVP).
 
 ---
 
@@ -279,6 +278,8 @@ Currently being worked on:
 
 Tasks finished in the last session(s):
 
+- ✅ **game-summary-screen** — Inline game-end status bar, round points breakdown, Play Again flow
+- ✅ **hobo-line-double-scoring** — Line-end pip + spinner pips when double lands on branch tip (16/16 checklist)
 - ✅ **compact-boneyard-display** — Smaller scrollable boneyard pool, tighter mobile draw section
 - ✅ **house-branch-layout** — Mobile branch overflow fix, unified tile scale, compact status bar, hand/opponent racks
 - ✅ **tile-visual-polish** — Pip dominoes, settings panel, board hub layout, opponent peek
@@ -337,16 +338,16 @@ This repo is **vanilla JavaScript only** (`main.js`, Vite, CSS). Do not add Pyth
 | Metric | Count |
 |--------|-------|
 | Total Tasks | 31 |
-| Completed | 11 |
+| Completed | 12 |
 | In Progress | 0 |
-| Available | 20 |
+| Available | 19 |
 | Phase 2 Priority | 2 remaining |
 
 ---
 
-**Next session:** **`animation-tile-placement`**, then **`game-summary-screen`**.
+**Next session:** **`animation-tile-placement`**, then **`move-history-log`**.
 
 ---
 
-*Last updated: 2026-06-15*  
+*Last updated: 2026-06-28*  
 *Update this file every time you claim, start, or complete a task*

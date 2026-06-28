@@ -326,8 +326,146 @@ function applyScore(who, points) {
   if (points > 0) {
     if (who === "player") playerScore += points;
     else computerScore += points;
+    matchPeakScore = Math.max(matchPeakScore, playerScore, computerScore);
   }
   return checkMatchWin();
+}
+
+function recordMovePlayed() {
+  roundMoveCount += 1;
+  matchMoveCount += 1;
+}
+
+function recordRoundEnded() {
+  matchRoundCount += 1;
+  if (lastRoundWinner === "player") matchPlayerRoundWins += 1;
+  else if (lastRoundWinner === "computer") matchComputerRoundWins += 1;
+}
+
+function tallyHandPips(hand) {
+  return hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
+}
+
+function rememberLastPlay(message) {
+  lastPlaySummary = message;
+  lastPlayBoardPips = liveCalculationText !== "No tiles played yet." ? liveCalculationText : "";
+}
+
+function clearRoundSummaries() {
+  lastPlaySummary = "";
+  lastPlayBoardPips = "";
+  roundEndDetail = null;
+}
+
+function formatLastPlayLine(summary, boardPips) {
+  const parts = [];
+
+  const scoredMatch = summary?.match(/scored (\d+) points/i);
+  if (scoredMatch) {
+    parts.push(`+${scoredMatch[1]} scored`);
+  } else if (summary) {
+    parts.push("no score");
+  }
+
+  const pipMatch = boardPips?.match(/=\s*(\d+)\s*Pips/i);
+  if (pipMatch) {
+    parts.push(`${pipMatch[1]} pips on board`);
+  }
+
+  return parts.join(" · ");
+}
+
+function formatRoundPointsLine(winner, roundPlayerPts, roundComputerPts) {
+  if (roundEndDetail?.kind !== "domino") return "";
+
+  const winnerRoundPts = winner === "player" ? roundPlayerPts : roundComputerPts;
+  const inPlay = winnerRoundPts - roundEndDetail.sweepPoints;
+  const parts = [`+${winnerRoundPts} this round`];
+
+  if (inPlay > 0 && roundEndDetail.sweepPoints > 0) {
+    parts.push(`${inPlay} in-play`, `sweep +${roundEndDetail.sweepPoints} (${roundEndDetail.opponentRawPips} pips)`);
+  } else if (roundEndDetail.sweepPoints > 0) {
+    parts.push(`swept ${roundEndDetail.opponentRawPips} pips → +${roundEndDetail.sweepPoints}`);
+  }
+  return parts.join(" · ");
+}
+
+function getGameSummaryModel() {
+  if (!isGameOver && !isMatchOver) return null;
+
+  const target = getGameTarget();
+  const roundPlayerPts = playerScore - roundStartPlayerScore;
+  const roundComputerPts = computerScore - roundStartComputerScore;
+  const scores = { player: playerScore, computer: computerScore, target };
+
+  if (isMatchOver) {
+    let headline;
+    let winner;
+    if (playerScore > computerScore) {
+      headline = "You win the game!";
+      winner = "player";
+    } else if (computerScore > playerScore) {
+      headline = "Computer wins the game";
+      winner = "computer";
+    } else {
+      headline = "Match tied";
+      winner = "tie";
+    }
+
+    const lastRoundPts = lastRoundWinner === "player" ? roundPlayerPts : roundComputerPts;
+    const closingRoundLine = roundEndDetail?.kind === "domino"
+      ? formatRoundPointsLine(lastRoundWinner, roundPlayerPts, roundComputerPts)
+      : (lastRoundPts > 0 ? `Final round +${lastRoundPts}` : "");
+
+    return {
+      kind: "match",
+      winner,
+      headline,
+      subline: closingRoundLine,
+      lastPlayLine: formatLastPlayLine(lastPlaySummary, lastPlayBoardPips),
+      scores,
+      primaryAction: { label: "Play Again", handler: initMatch },
+    };
+  }
+
+  let headline;
+  let winner;
+  let subline;
+
+  if (lastRoundBlocked) {
+    headline = "Round blocked";
+    winner = "blocked";
+    const playerPips = roundEndDetail?.playerPips ?? tallyHandPips(playerHand);
+    const computerPips = roundEndDetail?.computerPips ?? tallyHandPips(computerHand);
+    subline = `No score · You ${playerPips} pips · CPU ${computerPips} pips`;
+    if (playerPips > computerPips) {
+      subline += " · You open next";
+    } else if (computerPips > playerPips) {
+      subline += " · Computer opens next";
+    } else {
+      subline += " · Draw for first";
+    }
+  } else if (lastRoundWinner === "player") {
+    headline = "You win the round!";
+    winner = "player";
+    subline = formatRoundPointsLine("player", roundPlayerPts, roundComputerPts)
+      || (roundPlayerPts > 0 ? `+${roundPlayerPts} this round` : "No points this round");
+  } else {
+    headline = "Computer wins the round";
+    winner = "computer";
+    subline = formatRoundPointsLine("computer", roundPlayerPts, roundComputerPts)
+      || (roundComputerPts > 0 ? `Computer +${roundComputerPts} this round` : "No points this round");
+  }
+
+  return {
+    kind: "round",
+    winner,
+    headline,
+    subline,
+    lastPlayLine: formatLastPlayLine(lastPlaySummary, lastPlayBoardPips),
+    scores,
+    primaryAction: { label: "Next Round", handler: startNextRound },
+  };
 }
 
 function checkMatchWin() {
@@ -337,6 +475,10 @@ function checkMatchWin() {
   const playerReached = playerScore >= target;
   const computerReached = computerScore >= target;
   if (!playerReached && !computerReached) return false;
+
+  if (!isGameOver) {
+    matchRoundCount += 1;
+  }
 
   isMatchOver = true;
   isGameOver = true;
@@ -394,6 +536,18 @@ let lastRoundBlocked = false;
 let nextRoundOpener = null;
 let hoboLine = [];
 let hoboCenterLineActive = true;
+
+let roundStartPlayerScore = 0;
+let roundStartComputerScore = 0;
+let roundMoveCount = 0;
+let matchRoundCount = 0;
+let matchMoveCount = 0;
+let matchPlayerRoundWins = 0;
+let matchComputerRoundWins = 0;
+let matchPeakScore = 0;
+let lastPlaySummary = "";
+let lastPlayBoardPips = "";
+let roundEndDetail = null;
 
 // --- Diagnostic Variables ---
 let liveCalculationText = "No tiles played yet.";
@@ -560,6 +714,7 @@ function handleHouseAutomaticStart() {
   if (highestDouble !== -1) {
     board.spinner = [highestDouble, highestDouble];
     paperTapeHistory.push(`[START] Spinner set to Big ${highestDouble}.`);
+    recordMovePlayed();
 
     if (starter === "player") {
       playerHand.splice(targetIndex, 1);
@@ -882,8 +1037,18 @@ function showFeedbackToast(message, variant, durationMs = 2500) {
   feedbackToastTimer = setTimeout(() => {
     feedbackToast = null;
     feedbackToastTimer = null;
-    renderGame();
+    if (!isGameOver && !isMatchOver) {
+      renderGame();
+    }
   }, durationMs);
+}
+
+function clearFeedbackToast() {
+  feedbackToast = null;
+  if (feedbackToastTimer) {
+    clearTimeout(feedbackToastTimer);
+    feedbackToastTimer = null;
+  }
 }
 
 function showMoveError(message) {
@@ -918,15 +1083,22 @@ function hasAnyValidMoves(hand) {
 
 // --- 8. Check End-Game Conditions & Sweep Hand Pips ---
 function checkWinCondition() {
-  const tallyHandPips = (hand) => hand.reduce((sum, tile) => sum + tile[0] + tile[1], 0);
   const sweepLabel = isHouseRules() ? "House (round down)" : "Hobo (round up)";
 
   if (playerHand.length === 0) {
     isGameOver = true;
     lastRoundBlocked = false;
     lastRoundWinner = "player";
+    recordRoundEnded();
     const rawPips = tallyHandPips(computerHand);
     const endPoints = roundSweepPips(rawPips);
+    roundEndDetail = {
+      kind: "domino",
+      winner: "player",
+      opponentRawPips: rawPips,
+      sweepPoints: endPoints,
+      sweepLabel,
+    };
     applyScore("player", endPoints);
 
     if (!isMatchOver) {
@@ -941,8 +1113,16 @@ function checkWinCondition() {
     isGameOver = true;
     lastRoundBlocked = false;
     lastRoundWinner = "computer";
+    recordRoundEnded();
     const rawPips = tallyHandPips(playerHand);
     const endPoints = roundSweepPips(rawPips);
+    roundEndDetail = {
+      kind: "domino",
+      winner: "computer",
+      opponentRawPips: rawPips,
+      sweepPoints: endPoints,
+      sweepLabel,
+    };
     applyScore("computer", endPoints);
 
     if (!isMatchOver) {
@@ -956,8 +1136,10 @@ function checkWinCondition() {
   if (boneyard.length === 0 && !hasAnyValidMoves(playerHand) && !hasAnyValidMoves(computerHand)) {
     isGameOver = true;
     lastRoundBlocked = true;
+    recordRoundEnded();
     const playerPips = tallyHandPips(playerHand);
     const computerPips = tallyHandPips(computerHand);
+    roundEndDetail = { kind: "blocked", playerPips, computerPips };
 
     let finalSummary = `Round blocked! Pips remaining: You (${playerPips}), Computer (${computerPips}). No points awarded. `;
 
@@ -1042,9 +1224,12 @@ function evaluateBoardScoreHobo(updateLiveDisplay = false, contextLabel = "", pl
       mathExpression = `Opening tile ${playMeta.left}+${playMeta.right}`;
       break;
     case "first-double":
-    case "line-double":
       totalBoardPips = playMeta.spinnerPips;
       mathExpression = `Spinner double ${playMeta.spinnerVal}+${playMeta.spinnerVal}`;
+      break;
+    case "line-double":
+      totalBoardPips = playMeta.lineEndPip + playMeta.spinnerPips;
+      mathExpression = `Line end ${playMeta.lineEndPip} + spinner ${playMeta.spinnerVal}+${playMeta.spinnerVal}`;
       break;
     case "line-extend":
       totalBoardPips = playMeta.leftEnd + playMeta.rightEnd;
@@ -1230,11 +1415,14 @@ function commitHoboPlay(target, tile, whoLabel) {
     const oriented = orientTileForLineEnd(tile, tipValue, side);
     if (oriented.isDouble || tile[0] === tile[1]) {
       promoteLineDoubleToSpinner(side, tile);
+      const lineBranch = side === "left" ? "right" : "left";
+      const lineEndPip = getBranchTip(lineBranch);
       return {
         playMeta: {
           kind: "line-double",
           spinnerVal: oriented.leftEnd,
           spinnerPips: oriented.leftEnd * 2,
+          lineEndPip,
         },
         placedOnBranch: false,
       };
@@ -1323,20 +1511,13 @@ function playToTarget(target) {
   playerHand.splice(selectedTileIndex, 1);
   selectedTileIndex = null;
   moveFeedbackIsError = false;
+  recordMovePlayed();
 
   const pointsEarned = isHouseRules()
     ? evaluateBoardScore(true, "PLAYER")
     : evaluateBoardScoreHobo(true, "PLAYER", result.playMeta);
 
   const targetLabel = formatPlayTargetLabel(target);
-  if (applyScore("player", pointsEarned)) {
-    if (pointsEarned > 0) {
-      announceScoreFeedback(pointsEarned, "player");
-    }
-    renderGame();
-    return;
-  }
-
   if (pointsEarned > 0) {
     gameLog = `You scored ${pointsEarned} points on the ${targetLabel}!`;
   } else if (isHoboRules() && result.playMeta?.kind === "first-double") {
@@ -1346,12 +1527,19 @@ function playToTarget(target) {
   } else {
     gameLog = `You played on the ${targetLabel} — no score.`;
   }
-  announceScoreFeedback(pointsEarned, "player");
+  rememberLastPlay(gameLog);
+
+  if (applyScore("player", pointsEarned)) {
+    renderGame();
+    return;
+  }
 
   if (checkWinCondition()) {
     renderGame();
     return;
   }
+
+  announceScoreFeedback(pointsEarned, "player");
 
   isPlayerTurn = false;
   renderGame();
@@ -1492,20 +1680,13 @@ function executeComputerTurn() {
   if (exactIndex !== -1) {
     computerHand.splice(exactIndex, 1);
   }
+  recordMovePlayed();
 
   const pointsEarned = isHouseRules()
     ? evaluateBoardScore(true, "COMPUTER")
     : evaluateBoardScoreHobo(true, "COMPUTER", result.playMeta);
   let drawContext = tilesDrawnCount > 0 ? `after drawing ${tilesDrawnCount} tiles ` : "";
   const targetLabel = formatPlayTargetLabel(bestMove.target);
-
-  if (applyScore("computer", pointsEarned)) {
-    if (pointsEarned > 0) {
-      announceScoreFeedback(pointsEarned, "computer");
-    }
-    renderGame();
-    return;
-  }
 
   if (pointsEarned > 0) {
     gameLog = `Computer ${drawContext}scored ${pointsEarned} points on the ${targetLabel}!`;
@@ -1516,12 +1697,19 @@ function executeComputerTurn() {
   } else {
     gameLog = `Computer ${drawContext}played on the ${targetLabel} — no score.`;
   }
-  announceScoreFeedback(pointsEarned, "computer");
+  rememberLastPlay(gameLog);
+
+  if (applyScore("computer", pointsEarned)) {
+    renderGame();
+    return;
+  }
 
   if (checkWinCondition()) {
     renderGame();
     return;
   }
+
+  announceScoreFeedback(pointsEarned, "computer");
 
   isPlayerTurn = true;
   renderGame();
@@ -1581,12 +1769,16 @@ function renderSettingsPanel(container) {
     settingsPanelOpen = !settingsPanelOpen;
     renderGame();
   };
-  wrapper.appendChild(toggle);
 
   if (!settingsPanelOpen) {
+    wrapper.appendChild(toggle);
     container.appendChild(wrapper);
     return;
   }
+
+  const card = document.createElement("div");
+  card.className = "settings-card";
+  card.appendChild(toggle);
 
   const body = document.createElement("div");
   body.className = "settings-body";
@@ -1639,14 +1831,15 @@ function renderSettingsPanel(container) {
   });
   body.appendChild(targetField);
 
-  if (gameSettings.rulesMode === "hobo") {
-    const note = document.createElement("p");
-    note.className = "settings-note";
-    note.textContent = "Hobo: center line until a double sets the spinner; sweep rounds up at round end.";
-    body.appendChild(note);
-  }
+  const note = document.createElement("p");
+  note.className = "settings-note";
+  note.textContent = gameSettings.rulesMode === "hobo"
+    ? "Hobo: center line until a double sets the spinner; sweep rounds up at round end."
+    : "House: highest double starts; Louisiana scoring on branch tips; sweep rounds down.";
+  body.appendChild(note);
 
-  wrapper.appendChild(body);
+  card.appendChild(body);
+  wrapper.appendChild(card);
   container.appendChild(wrapper);
 }
 
@@ -1695,6 +1888,10 @@ function scrollBoardToCenterInWrapper(boardWrapper) {
 }
 
 function renderGame() {
+  if (isGameOver || isMatchOver) {
+    clearFeedbackToast();
+  }
+
   const appDiv = document.getElementById("app");
   appDiv.innerHTML = "";
 
@@ -1707,15 +1904,19 @@ function renderGame() {
   gameTableSide.appendChild(renderGameTitle());
 
   const target = getGameTarget();
+  const summaryModel = getGameSummaryModel();
   const statusBar = document.createElement("div");
   statusBar.className = "game-status";
+
+  const youWinner = summaryModel?.winner === "player";
+  const cpuWinner = summaryModel?.winner === "computer";
 
   const scoresRow = document.createElement("div");
   scoresRow.className = "game-status__scores";
   scoresRow.innerHTML = `
-    <span class="game-status__you">You <strong>${playerScore}</strong></span>
+    <span class="game-status__you${youWinner ? " game-status__you--winner" : ""}">You <strong>${playerScore}</strong></span>
     <span class="game-status__sep" aria-hidden="true">·</span>
-    <span class="game-status__cpu">CPU <strong>${computerScore}</strong></span>
+    <span class="game-status__cpu${cpuWinner ? " game-status__cpu--winner" : ""}">CPU <strong>${computerScore}</strong></span>
     <span class="game-status__target">to ${target}</span>
     <span class="game-status__sep" aria-hidden="true">·</span>
     <span class="game-status__meta">Boneyard ${boneyard.length}</span>
@@ -1724,9 +1925,11 @@ function renderGame() {
 
   const turnLine = document.createElement("div");
   turnLine.className = "turn-line";
-  if (isMatchOver || isGameOver) {
+  if (summaryModel) {
     turnLine.classList.add("turn-line--over");
-    turnLine.textContent = gameLog;
+    if (summaryModel.winner === "player") turnLine.classList.add("turn-line--player");
+    else if (summaryModel.winner === "computer") turnLine.classList.add("turn-line--computer");
+    turnLine.textContent = summaryModel.headline;
   } else if (isPlayerTurn) {
     turnLine.classList.add("turn-line--player");
     turnLine.textContent = "Your turn · tap a branch";
@@ -1736,7 +1939,9 @@ function renderGame() {
   }
   statusBar.appendChild(turnLine);
 
-  const showBoardPips = boardHasAnyTiles() && liveCalculationText !== "No tiles played yet.";
+  const showBoardPips = boardHasAnyTiles()
+    && liveCalculationText !== "No tiles played yet."
+    && !summaryModel;
   if (showBoardPips) {
     const pipsLine = document.createElement("p");
     pipsLine.className = "board-pips";
@@ -1744,8 +1949,19 @@ function renderGame() {
     statusBar.appendChild(pipsLine);
   }
 
-  const showLastAction = gameLog && !isGameOver && !isMatchOver && !moveFeedbackIsError;
-  if (showLastAction) {
+  if (summaryModel?.subline) {
+    const roundDetail = document.createElement("p");
+    roundDetail.className = "board-pips";
+    roundDetail.textContent = summaryModel.subline;
+    statusBar.appendChild(roundDetail);
+  }
+
+  if (summaryModel?.lastPlayLine) {
+    const lastPlayLine = document.createElement("p");
+    lastPlayLine.className = "last-action";
+    lastPlayLine.textContent = `Last play: ${summaryModel.lastPlayLine}`;
+    statusBar.appendChild(lastPlayLine);
+  } else if (gameLog && !moveFeedbackIsError) {
     const lastAction = document.createElement("p");
     lastAction.className = "last-action";
     lastAction.textContent = gameLog;
@@ -1779,7 +1995,7 @@ function renderGame() {
     gameTableSide.appendChild(logBox);
   }
 
-  if (feedbackToast) {
+  if (feedbackToast?.variant === "error") {
     const toast = document.createElement("div");
     toast.className = `feedback-toast feedback-toast--${feedbackToast.variant}`;
     toast.textContent = feedbackToast.message;
@@ -2080,6 +2296,14 @@ function renderGame() {
     boardScaler.appendChild(boardDiv);
   }
   boardWrapper.appendChild(boardScaler);
+  if (feedbackToast && feedbackToast.variant !== "error") {
+    const toast = document.createElement("div");
+    toast.className = `feedback-toast feedback-toast--corner feedback-toast--${feedbackToast.variant}`;
+    toast.textContent = feedbackToast.message;
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    boardWrapper.appendChild(toast);
+  }
   gameTableSide.appendChild(boardWrapper);
   scrollBoardToCenterInWrapper(boardWrapper);
   scrollHorizontalArmsToOpenEnd(boardWrapper);
@@ -2159,18 +2383,13 @@ function renderGame() {
   });
   gameTableSide.appendChild(handContainer);
 
-  if (isMatchOver) {
-    const newGameBtn = document.createElement("button");
-    newGameBtn.className = "btn btn-success";
-    newGameBtn.textContent = "🔄 New Game";
-    newGameBtn.onclick = initMatch;
-    gameTableSide.appendChild(newGameBtn);
-  } else if (isGameOver) {
-    const restartBtn = document.createElement("button");
-    restartBtn.className = "btn btn-success";
-    restartBtn.textContent = "▶️ Next Round";
-    restartBtn.onclick = startNextRound;
-    gameTableSide.appendChild(restartBtn);
+  if (summaryModel) {
+    const actionBtn = document.createElement("button");
+    actionBtn.type = "button";
+    actionBtn.className = "btn btn-success";
+    actionBtn.textContent = summaryModel.primaryAction.label;
+    actionBtn.onclick = summaryModel.primaryAction.handler;
+    gameTableSide.appendChild(actionBtn);
   }
 
   const auditPanel = document.createElement("aside");
@@ -2463,8 +2682,24 @@ window.runHoboScoringChecklist = function() {
 
   check("3. Double opener 5·5 → 10 scores",
     evaluateBoardScoreHobo(false, "TEST", { kind: "first-double", spinnerVal: 5, spinnerPips: 10 }), 10);
-  check("3b. Line-end double 3·3 → 6 no score",
-    evaluateBoardScoreHobo(false, "TEST", { kind: "line-double", spinnerVal: 3, spinnerPips: 6 }), 0);
+  check("3b. Line-end double 6·4 + 4·4 → 14 pips no score",
+    evaluateBoardScoreHobo(false, "TEST", { kind: "line-double", spinnerVal: 4, spinnerPips: 8, lineEndPip: 6 }), 0);
+  check("3c. Line-end double line 5 + spinner 5·5 → 15 scores",
+    evaluateBoardScoreHobo(false, "TEST", { kind: "line-double", spinnerVal: 5, spinnerPips: 10, lineEndPip: 5 }), 15);
+
+  hoboCenterLineActive = true;
+  hoboLine = [{ tile: [6, 4], leftEnd: 6, rightEnd: 4, isDouble: false, isLatest: true }];
+  board.spinner = null;
+  board.branches = { left: [], right: [], up: [], down: [] };
+  const lineDoubleResult = commitHoboPlay(HOBO_LINE_RIGHT, [4, 4], "Test");
+  check("3d. 6·4 line-end 4·4 sets lineEndPip 6",
+    lineDoubleResult.playMeta?.lineEndPip === 6 && lineDoubleResult.playMeta?.spinnerPips === 8, true);
+  check("3e. 6·4 line-end 4·4 pip total 14 (no points)",
+    evaluateBoardScoreHobo(false, "TEST", lineDoubleResult.playMeta), 0);
+  hoboLine = [];
+  board.spinner = null;
+  board.branches = { left: [], right: [], up: [], down: [] };
+  hoboCenterLineActive = true;
 
   check("4. Spinner + one branch: outer 0 + spinner 10 → 10 scores",
     evaluateBoardScoreHobo(false, "TEST", { kind: "spinner-first-branch", outerPip: 0, spinnerPips: 10 }), 10);
@@ -2544,6 +2779,10 @@ window.runHouseRulesChecklist = function() {
 // --- 15. Execution Loop ---
 function startNextRound() {
   isGameOver = false;
+  roundStartPlayerScore = playerScore;
+  roundStartComputerScore = computerScore;
+  roundMoveCount = 0;
+  clearRoundSummaries();
   resetBoardFillLayout();
   paperTapeHistory = [];
   liveCalculationText = "No tiles played yet.";
@@ -2581,6 +2820,15 @@ function initMatch() {
   lastRoundBlocked = false;
   nextRoundOpener = null;
   isMatchOver = false;
+  matchRoundCount = 0;
+  matchMoveCount = 0;
+  matchPlayerRoundWins = 0;
+  matchComputerRoundWins = 0;
+  matchPeakScore = 0;
+  roundStartPlayerScore = 0;
+  roundStartComputerScore = 0;
+  roundMoveCount = 0;
+  clearRoundSummaries();
   startNextRound();
 }
 
